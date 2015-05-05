@@ -42,7 +42,7 @@ app.use(multer({
                                 fileSize: 4000000
                             },
     onFileUploadStart:      function (file, req, res) {
-                                console.log(file.fieldname + ' is starting ...');
+                                console.log(file.fieldname + ' is starting..');
                             },
     onFileUploadComplete:   function (file, req, res) {
                                  console.log(file.fieldname + ' uploaded to  ' + file.path);

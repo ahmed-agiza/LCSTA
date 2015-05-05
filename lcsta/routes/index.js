@@ -4,9 +4,10 @@ var fs = require('fs');
 var flash = require('connect-flash');
 var router = express.Router();
 
-var VerilogParser = require('../models/verilog_parser');
+var VerilogParser = require('../models/netlist_parser');
 var LibertyParser = require('../models/liberty_parser');
-var GraphBuilder = require('../models/graph_builder');
+var ClockParser = require('../models/clock_skews_parser');
+var CapParser = require('../models/net_capacitances_parser');
 var Cell = require('../models/cell').cell;
 var Connect = require('../models/cell').connect;
 var TemplateCell = require('../models/cell').templateCell;
@@ -32,177 +33,159 @@ router.get('/', function(req, res){ //File upload view.
 	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});
 });
 
-router.get('/about', function(req, res){ //Netlist upload view.
+router.get('/about', function(req, res){ //About view.
 	res.render('about', {title: 'About LCSTA'});
 });
 
-router.get('/report', function(req, res){ //Netlist upload view.
+router.get('/report', function(req, res){ //Timing report view.
 	req.flash('error', 'Please select a Verilog netlist file to process.')
 	res.redirect('/');
 });
 
 
 router.post('/report', function(req, res){ //Generate timing report.
-	res.redirect('/');
+
 	/*if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
 		res.redirect('/');
 		return;
+	}*/
+
+	if(typeof(req.files.stdcell) === 'undefined'){
+		console.log('No standard cell file uploaded');
+		req.flash('error', 'Select a standard cell library file to process.');
+		res.redirect('/');
+		return;
 	}
-	if (req.body.stdcells != 'custom'){
-		var filePath = './' + req.files.netlist.path; //Full file path.
-		var content; //File content holder.
-		fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
-		    if (err) {
-		    	req.flash('error', 'Select a Verilog netlist file to process.');
+/*
+	if(typeof(req.files.clk) === 'undefined'){
+		console.log('No clock skews file uploaded');
+		req.flash('error', 'Select a clock skews file to process.');
+		res.redirect('/');
+		return;
+	}
+
+	if(typeof(req.files.cap) === 'undefined'){
+		console.log('No net capacitances files uploaded');
+		req.flash('error', 'Select net capacitances files to process.');
+		res.redirect('/');
+		return;
+	}
+*/
+	//var netlistPath = './' + req.files.netlist.path; //Netlist file path.
+	var stdcellPath = './' + req.files.stdcell.path; //Stdcell file path.
+	//var clkPath = './' + req.files.clk.path; //Clock skews file path.
+	//var capPath = './' + req.files.cap.path; //Net capacitances file path.
+
+	fs.readFile(stdcellPath, 'utf8', function(err, stdcellData){
+		if(err){
+				console.log(err);
+				req.flash('error', 'Error while reading the standard cell file.');
 		        res.redirect('/');
-		        fs.unlink(filePath); //Deleting uploaded file.
+		        fs.unlink(stdcellPath); //Deleting uploaded file.
+		        fs.unlink(netlistPath);
+		        fs.unlink(clkPath);
+		        fs.unlink(capPath);
 		    }else{
-		    	content = data;
-		    	Parser.parseNetlist(content, edif, function(err, gates, wires, warnings){
+		    	LibertyParser.parse(stdcellData, function(err, stdcell){
 		    		if(err){
 		    			console.log(err);
-		    			res.render('report', { title: 'Timing Report',
-		    									error: err,
-		    									graphGates: JSON.stringify([]),
-		    									graphWires: JSON.stringify([]),
-		    									graphMapper: JSON.stringify([]),
-		    									connectionWires: JSON.stringify([]),
-		    									content: content});
-		    			fs.unlink(filePath); //Deleting processed file.
+		    			req.flash('error', 'Error while parsing the standard cell file.');
+		        		res.redirect('/');
+		        		fs.unlink(stdcellPath); //Deleting uploaded file.
+		        		fs.unlink(netlistPath);
+						fs.unlink(clkPath);
+						fs.unlink(capPath);
 		    		}else{
-		    			var builder = new GraphBuilder(gates);
-		    			builder.LongestPathLayering(); // Layering of the DAG
-		    			builder.ProperLayering(); // Dummy nodes placement
-		    			builder.CrossingReduction(); // Crossing reduction
-		    			
-		    			var graph_settings = {
-		    				max_comp_w: 100,
-		    				max_comp_h: 50,
-		    				layer_spacing: 150,
-		    				node_spacing: 50,
-		    				left_marg: 10,
-		    				top_marg: 10
-		    			};
-		    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-		    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
-		    			var wiresMap = {};
-		    			for(var i = 0; i < wires.length; i++)
-		    				wiresMap[wires[i].id] = wires[i];
-		    			var al = GraphingMaterial.adjaceny_list;
- 		    			res.render('circuit', { title: 'Circuit',
-		    									error: '',
-		    									graphGates: JSON.stringify(GraphingMaterial.gates),
-		    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
-		    									graphMapper: JSON.stringify(graphMapper),
-		    									connectionWires: JSON.stringify(wiresMap),
-		    									warnings: JSON.stringify(warnings),
-		    									content: content});
-		    			fs.unlink(filePath); //Deleting processed file.
-		    		}
-		    	}); //Parsing file content.
-				
-				
-		    }
-		    
-		});
-	}else{
-		var filePath = './' + req.files.netlist.path; //Full file path.
-		if(typeof(req.files.stdcellfile) === 'undefined'){
-			console.log('No stdcell file uploaded');
-			req.flash('error', 'You must specify the custom standard cell library.');
-			res.redirect('/');
-			fs.unlink(filePath);
-			return;
-		}
-		var stdCellFilePath = './' + req.files.stdcellfile.path;
-		var stdCellCeontent;
-
-		fs.readFile(stdCellFilePath, 'utf8', function read(err, data){
-			if (err) {
-		    	req.flash('error', 'Select a Verilog netlist file to process.');
-		        res.redirect('/');
-		        fs.unlink(filePath); //Deleting uploaded file.
-		        fs.unlink(stdCellFilePath);
-		    }else{
-		    	stdCellContent = data;
-		    	var content; //File content holder.
-				fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
-				    if (err) {
-				    	console.log('READ ERROR');
-				    	console.log(err);
-				        res.status(500).send('Error');
-				        fs.unlink(filePath); //Deleting uploaded file.
-				        fs.unlink(stdCellFilePath);
-				    }else{
-				    	content = data;
-				    	Parser.parseLibrary(stdCellContent, function(err, parsedEdif){
-				    		if (err) {
-				    			console.log('LIB ERROR');
-						    	console.log(err);
-						        res.status(500).send('Error');
-						        fs.unlink(filePath); //Deleting uploaded file.
-						        fs.unlink(stdCellFilePath);
+		    			console.log(stdcell);
+		    			res.send(stdcell);
+		    			return;
+		    			fs.readFile(netlistPath, 'utf8', function(err, netlistData){
+		    				if(err){
+				    			console.log(err);
+				    			req.flash('error', 'Error while reading the netlist file.');
+				        		res.redirect('/');
+				        		fs.unlink(stdcellPath); //Deleting uploaded file.
+						        fs.unlink(netlistPath);
+						        fs.unlink(clkPath);
+						        fs.unlink(capPath);
 				    		}else{
-				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
-						    		if(err){
-						    			console.log('NETLIST ERROR');
+				    			VerilogParser.parse(netlistData, function(err, cells){
+				    				if(err){
 						    			console.log(err);
-						    			res.render('circuit', { title: 'Circuit',
-						    									error: err,
-						    									graphGates: JSON.stringify([]),
-						    									graphWires: JSON.stringify([]),
-						    									graphMapper: JSON.stringify([]),
-						    									connectionWires: JSON.stringify([]),
-						    									content: content});
-						    			fs.unlink(filePath); //Deleting processed file.
-						    			fs.unlink(stdCellFilePath);
-						    		}else{
-						    			var builder = new GraphBuilder(gates);
-						    			builder.LongestPathLayering(); // Layering of the DAG
-						    			builder.ProperLayering(); // Dummy nodes placement
-						    			builder.CrossingReduction(); // Crossing reduction
-						    			
-						    			var graph_settings = {
-						    				max_comp_w: 100,
-						    				max_comp_h: 50,
-						    				layer_spacing: 150,
-						    				node_spacing: 50,
-						    				left_marg: 10,
-						    				top_marg: 10
-						    			};
-						    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-						    			var graphMapper = parsedEdif.getJointMap(); //Mapping gates to logic digarams.
-						    			var wiresMap = {};
-						    			for(var i = 0; i < wires.length; i++)
-						    				wiresMap[wires[i].id] = wires[i];
-						    			res.render('circuit', { title: 'Circuit',
-						    									error: '',
-						    									graphGates: JSON.stringify(GraphingMaterial.gates),
-						    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
-						    									graphMapper: JSON.stringify(graphMapper),
-						    									connectionWires: JSON.stringify(wiresMap),
-						    									warnings: JSON.stringify(warnings),
-						    									content: content});
-						    			fs.unlink(filePath); //Deleting processed file.
-						    			fs.unlink(stdCellFilePath);
-						    		}
-						    	}); //Parsing file content.
+						    			req.flash('error', 'Error while parsing the netlist file.');
+						        		res.redirect('/');
+						        		fs.unlink(stdcellPath); //Deleting uploaded file.
+								        fs.unlink(netlistPath);
+								        fs.unlink(clkPath);
+								        fs.unlink(capPath);
+						        	}else{
+						        		console.log(cells);
+						        		fs.readFile(clkPath, 'utf8', function(err, clkData){
+						        			if(err){
+								    			console.log(err);
+								    			req.flash('error', 'Error while reading the clock skews file.');
+								        		res.redirect('/');
+								        		fs.unlink(stdcellPath); //Deleting uploaded file.
+										        fs.unlink(netlistPath);
+										        fs.unlink(clkPath);
+										        fs.unlink(capPath);
+								        	}else{
+								        		ClockParser.parse(clkData, function(err, skews){
+								        			if(err){
+								        				console.log(err);
+										    			req.flash('error', 'Error while parsing the clock skews file.');
+										        		res.redirect('/');
+										        		fs.unlink(stdcellPath); //Deleting uploaded file.
+												        fs.unlink(netlistPath);
+												        fs.unlink(clkPath);
+												        fs.unlink(capPath);
+								        			}else{
+								        				console.log(skews);
+								        				fs.readFile(capPath, 'utf8', function(err, capData){
+								        					if(err){
+								        						console.log(err);
+												    			req.flash('error', 'Error while reading the net capacitances file.');
+												        		res.redirect('/');
+												        		fs.unlink(stdcellPath); //Deleting uploaded file.
+														        fs.unlink(netlistPath);
+														        fs.unlink(clkPath);
+														        fs.unlink(capPath);
+								        					}else{
+								        						CapParser.parse(capData, function(err, caps){
+								        							if(err){
+										        						console.log(err);
+														    			req.flash('error', 'Error while parsing the net capacitances file.');
+														        		res.redirect('/');
+														        		fs.unlink(stdcellPath); //Deleting uploaded file.
+																        fs.unlink(netlistPath);
+																        fs.unlink(clkPath);
+																        fs.unlink(capPath);
+										        					}else{
+										        						console.log(caps);
+										        						res.send('true');
+										        						fs.unlink(stdcellPath); //Deleting uploaded file.
+																        fs.unlink(netlistPath);
+																        fs.unlink(clkPath);
+																        fs.unlink(capPath);
+										        					}
+								        						})/****END PARSE CAP FILE****/
+								        					}
+								        				});/****END READ CAP FILE****/
+								        			}
+								        		});/****END PARSE CLK FILE****/
+								        	}
+						        		});/****END READ CLK FILE****/
+						        	}
+				    			}); /****END PARSE NETLIST****/
 				    		}
-				    	});
-				    	
-						
-						
-				    }
-				    
-				});
+		    			});/****END READ NETLIST****/
+		    		}
+		    		
+		    	});/****END PARSE STDCELL****/
 		    }
-		});
-
-		
-	}*/
-	
+	});/****END READ STDCELL****/
 
 	
 });
