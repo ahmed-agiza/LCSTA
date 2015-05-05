@@ -24,7 +24,7 @@ module.exports = function(instanceName, libDef){
 
 	this.getOutputs = function(){ //Getting output cells array.
 		if(typeof(this.outputPort) !== 'undefined')
-			return this.outputs[this.outputPort] = [];
+			return this.outputs[this.outputPort];
 	}
 	this.getInputs = function(){ //Getting input cells array.
 		if(typeof(this.inputPorts) !== 'undefined'){
