@@ -34,6 +34,18 @@ function getKey(object, value){
 }
 
 router.get('/', function(req, res){ //Netlist upload view.
+	var x = {v: 5,
+			 nx: null,
+			 pr: null};
+	var y = {v: 7,
+			 nx: null,
+			 pr: null};
+	var z = {v: 11,
+			 nx: null,
+			 pr: null};
+	y.nx = [x, z];
+	x.v = 9;
+	console.log(typeof y.nx[0]);
 	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});
 });
 
