@@ -79,7 +79,7 @@ module.exports.cell = function(instanceName, libDef){
 			this.cell_leakage_power = def.cell_leakage_power;
 			this.cellName = def.name;
 			this.inputPorts = def.inputs;
-			this.outputPort = def.output;
+			this.outputPort = def.outputs;
 			this.inputs = {};
 			this.outputs ={};
 			for(var key in this.inputPorts)
@@ -154,7 +154,7 @@ module.exports.templateCell = {
 							max_capacitance: 0
 					}
 			},
-	output: {
+	outputs: {
 				'y':{
 							name: 'y',
 							direction: DIRECTION.output,
