@@ -4,17 +4,12 @@ var fs = require('fs');
 var flash = require('connect-flash');
 var router = express.Router();
 
-var Component = require('../models/component');
-var Parser = require('../models/parser');
+var VerilogParser = require('../models/verilog_parser');
+var LibertyParser = require('../models/liberty_parser');
 var GraphBuilder = require('../models/graph_builder');
-var wire = Component.wire;
-var and = Component.and;
-var nand = Component.nand;
-var or =Component.or;
-var nor = Component.nor;
-var xor = Component.xor;
-var not = Component.not;
-var edif = Component.EDIF;
+var Cell = require('../models/cell').cell;
+var Connect = require('../models/cell').connect;
+var TemplateCell = require('../models/cell').templateCell;
 
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
@@ -33,19 +28,7 @@ function getKey(object, value){
     }
 }
 
-router.get('/', function(req, res){ //Netlist upload view.
-	var x = {v: 5,
-			 nx: null,
-			 pr: null};
-	var y = {v: 7,
-			 nx: null,
-			 pr: null};
-	var z = {v: 11,
-			 nx: null,
-			 pr: null};
-	y.nx = [x, z];
-	x.v = 9;
-	console.log(typeof y.nx[0]);
+router.get('/', function(req, res){ //File upload view.
 	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});
 });
 
@@ -59,8 +42,9 @@ router.get('/report', function(req, res){ //Netlist upload view.
 });
 
 
-router.post('/report', function(req, res){ //Netlist file parser.
-	if(typeof(req.files.netlist) === 'undefined'){
+router.post('/report', function(req, res){ //Generate timing report.
+	res.redirect('/');
+	/*if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
 		res.redirect('/');
@@ -217,7 +201,7 @@ router.post('/report', function(req, res){ //Netlist file parser.
 		});
 
 		
-	}
+	}*/
 	
 
 	
