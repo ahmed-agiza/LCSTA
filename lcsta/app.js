@@ -1,3 +1,5 @@
+"use strict";
+
 var express = require('express');
 var flash = require('express-flash');
 var session = require('express-session');
@@ -63,6 +65,12 @@ app.use(multer({
                 })
     );
 app.use('/', routes);
+
+//Emptying the temp directory
+var trashEntries = fs.readdirSync('./temp_uploads');
+for(var i = 0; i < trashEntries.length; i++){
+    fs.unlink('./temp_uploads/' + trashEntries[i]);
+}
 
 
 

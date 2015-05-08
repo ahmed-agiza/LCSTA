@@ -1,3 +1,5 @@
+"use strict";
+
 var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
@@ -44,7 +46,6 @@ router.get('/report', function(req, res){ //Timing report view.
 
 
 router.post('/report', function(req, res){ //Generate timing report.
-
 	/*if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
@@ -98,7 +99,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(clkPath);
 						fs.unlink(capPath);
 		    		}else{
-		    			console.log(stdcell);
+		    			//console.log(stdcell);
 		    			res.send(stdcell);
 		    			return;
 		    			fs.readFile(netlistPath, 'utf8', function(err, netlistData){

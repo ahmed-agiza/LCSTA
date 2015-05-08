@@ -1,40 +1,11 @@
+"use strict";
+
 /*	Cell Model  */
 
 var shortId = require('shortid');
 
-var DIRECTION = {
-	input: 0,
-	output: 1
-};
 
-module.exports.directions = DIRECTION;
-
-var TIMING_SENSE = {
-	negative_unate: 0,
-	positive_unate: 1,
-	non_unate: 2,
-};
-
-module.exports.timing_sense = TIMING_SENSE;
-
-var TIMING_TYPE = {
-	hold_falling: 0,
-	setup_falling: 1,
-	falling_edge: 2,
-	rising_edge: 3,
-	hold_rising: 4,
-	setup_rising: 5,
-	clear: 6,
-	preset: 7,
-	recovery_rising: 8,
-	removal_rising: 9,
-	three_state_enable: 10,
-	three_state_disable: 11
-};
-
-module.exports.timing_type = TIMING_TYPE;
-
-var port = function(name, direction, capacitance, rise_capacitance, fall_capacitance, max_capacitance){
+var port = function(name, direction, capacitance, rise_capacitance, fall_capacitance, max_capacitance, net_capacitance){
 	this.name = name;
 
 	if(typeof(direction) === 'undefined')
@@ -61,6 +32,11 @@ var port = function(name, direction, capacitance, rise_capacitance, fall_capacit
 		this.max_capacitance = 0;
 	else
 		this.max_capacitance = max_capacitance;
+
+	if(typeof(net_capacitance) === 'undefined')
+		this.net_capacitance = 0;
+	else
+		this.net_capacitance = net_capacitance;
 }
 
 module.exports.port = port;
@@ -86,8 +62,8 @@ module.exports.cell = function(instanceName, libDef){
 				this.inputs[this.inputPorts[key].name] = [];
 			var op = Object.keys(this.outputPort)[0];
 			this.outputs[op]= [];
-			this.ff = def.ff;
-			this.latch = def.latch;
+			this.is_ff = def.is_ff;
+			this.is_latch = def.is_latch;
 		}
 	}
 
@@ -111,13 +87,16 @@ module.exports.cell = function(instanceName, libDef){
 
 
 	this.isFF = function(){ //Checking for sequential elements.
-		return this.ff;
+		return this.is_ff;
 	}
 	this.isLatch = function(){ //Checking for sequential elements.
-		return this.latch;
+		return this.is_latch;
 	}
 
 };
+
+
+
 
 module.exports.connect = function(source, target, portName){
 	if(typeof(target.inputPorts[portName]) !== 'undefined'){
@@ -134,37 +113,77 @@ module.exports.connect = function(source, target, portName){
 };
 
 
+var clone = function(obj) {
+    var copy;
+
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) return obj;
+
+    // Handle Date
+    if (obj instanceof Date) {
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = clone(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+module.exports.clone = clone;
+
+
 module.exports.templateCell = {
 	name: 'TemplateCell',
 	inputs: {
 					'a':{
 							name: 'a',
-							direction: DIRECTION.input,
+							direction: 'input',
 							capacitance: 0.109759,
 							rise_capacitance: 0.109546,
 							fall_capacitance: 0.109759,
-							max_capacitance: 0
+							max_capacitance: 0,
+							net_capacitance: 0
 					}, 
 					'b':{
 							name: 'b',
-							direction: DIRECTION.input,
+							direction: 'input',
 							capacitance: 0.109759,
 							rise_capacitance: 0.109546,
 							fall_capacitance: 0.109759,
-							max_capacitance: 0
+							max_capacitance: 0,
+							net_capacitance: 0
 					}
 			},
 	outputs: {
 				'y':{
 							name: 'y',
-							direction: DIRECTION.output,
+							direction: 'output',
 							capacitance: 0,
 							rise_capacitance: 0,
 							fall_capacitance: 0,
 							max_capacitance: 0,
+							net_capacitance: 20,
 							timing:{
 									a: {
-											timing_sense: TIMING_SENSE.negative_unate,
+											timing_sense: 'negative_unate',
 											cell_fall:{
 												'0.015':{
 													'0.06':0.094223,
@@ -319,7 +338,7 @@ module.exports.templateCell = {
 			},
 	area : 96,
   	cell_leakage_power : 0.0252328,
-	ff: false,
-	latch: false
+	is_ff: false,
+	is_latch: false
 };
 
