@@ -4,7 +4,6 @@ var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
 var flash = require('connect-flash');
-var TPS = require('../node_modules/thinplate/thinplate');
 var router = express.Router();
 
 
@@ -47,87 +46,13 @@ router.get('/report', function(req, res){ //Timing report view.
 });
 
 
-/*function testInterpolate(points){
-	var tps = new TPS();
-
-  var fitpoints = points;
-
-  // we'll set the target to the be y value of each point
-  // this will generate a curve that goes through our fitpoints
-  var targets = fitpoints.map(function(curr){
-      return curr[curr.length-1];
-  });
-
-  //compile requires fitpoints, target and a callback
-  // callback returns error if there is one
-  tps.compile(fitpoints, targets, function(err){
-    if(err){
-      console.error(err);
-      return;
-    }
-
-    //now that it compiled we can use it.
-
-    //fill out some random points to interpolate
-    // (interpolation happens within the fitpoint boundaries)
-    var pnts = [];
-    for(var i = 0 ; i < 20; i++){
-      pnts.push([Math.random() * 0.8, Math.random() * 0.8]);
-    }
-
-    //have the tps solve for the values!
-    tps.getValues(pnts, function(err, result){
-
-        if(err) {
-          console.error(err);
-          return;
-        }
-
-        console.dir(result);
-      });
-
-    //fill out some random points to extrapolate
-    // (extrapolation happens outside the fitpoint boundaries)
-    var pnts = [];
-    for(var i = 0 ; i < 20; i++){
-      pnts.push([0.8 + Math.random() * 0.8,  0.8 + Math.random() * 0.8]);
-    }
-
-    //have the tps solve for the values!
-    tps.getValues(pnts, function(err, result){
-
-        if(err) {
-          console.error(err);
-          return;
-        }
-
-        console.dir(result);
-      });
-
-     //have the tps solve for the values!
-    tps.getValues(points, function(err, result){
-
-        if(err) {
-          console.error(err);
-          return;
-        }
-
-        console.dir(result);
-      });
-
-
-  });
-
-};*/
-
-
 router.post('/report', function(req, res){ //Generate timing report.
-	/*if(typeof(req.files.netlist) === 'undefined'){
+	if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
 		res.redirect('/');
 		return;
-	}*/
+	}
 
 	if(typeof(req.files.stdcell) === 'undefined'){
 		console.log('No standard cell file uploaded');
@@ -135,7 +60,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 		res.redirect('/');
 		return;
 	}
-/*
+
 	if(typeof(req.files.clk) === 'undefined'){
 		console.log('No clock skews file uploaded');
 		req.flash('error', 'Select a clock skews file to process.');
@@ -149,11 +74,11 @@ router.post('/report', function(req, res){ //Generate timing report.
 		res.redirect('/');
 		return;
 	}
-*/
-	//var netlistPath = './' + req.files.netlist.path; //Netlist file path.
+
+	var netlistPath = './' + req.files.netlist.path; //Netlist file path.
 	var stdcellPath = './' + req.files.stdcell.path; //Stdcell file path.
-	//var clkPath = './' + req.files.clk.path; //Clock skews file path.
-	//var capPath = './' + req.files.cap.path; //Net capacitances file path.
+	var clkPath = './' + req.files.clk.path; //Clock skews file path.
+	var capPath = './' + req.files.cap.path; //Net capacitances file path.
 
 	fs.readFile(stdcellPath, 'utf8', function(err, stdcellData){
 		if(err){
@@ -175,8 +100,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(clkPath);
 						fs.unlink(capPath);
 		    		}else{
-		    			res.send(stdcells);			
-		    			return;
 		    			fs.readFile(capPath, 'utf8', function(err, capData){
 		    				if(err){
 				    			console.log(err);
@@ -186,18 +109,18 @@ router.post('/report', function(req, res){ //Generate timing report.
 						        fs.unlink(netlistPath);
 						        fs.unlink(clkPath);
 						        fs.unlink(capPath);
+						        return;
 				    		}else{
 				    			CapParser.parse(capData, function(err, caps){
 				    				if(err){
 						    			console.log(err);
-						    			req.flash('error', 'Error while reading the net capacitances file.');
+						    			req.flash('error', 'Error while paarsing the net capacitances file.');
 						        		res.redirect('/');
 						        		fs.unlink(stdcellPath); //Deleting uploaded file.
 								        fs.unlink(netlistPath);
 								        fs.unlink(clkPath);
 								        fs.unlink(capPath);
 						        	}else{
-						        		console.log(caps);
 						        		fs.readFile(clkPath, 'utf8', function(err, clkData){
 						        			if(err){
 								    			console.log(err);
@@ -207,6 +130,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 										        fs.unlink(netlistPath);
 										        fs.unlink(clkPath);
 										        fs.unlink(capPath);
+										        return;
 								        	}else{
 								        		ClockParser.parse(clkData, function(err, skews){
 								        			if(err){
@@ -218,7 +142,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 												        fs.unlink(clkPath);
 												        fs.unlink(capPath);
 								        			}else{
-								        				console.log(skews);
 								        				fs.readFile(netlistPath, 'utf8', function(err, netlistData){	
 								        					if(err){
 								        						console.log(err);
@@ -229,7 +152,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        fs.unlink(clkPath);
 														        fs.unlink(capPath);
 								        					}else{
-								        						VerilogParser.parse(netlistData, function(err, cells){
+								        						VerilogParser.parse(netlistData, stdcells, caps, skews, function(err, cells){
 								        							if(err){
 										        						console.log(err);
 														    			req.flash('error', 'Error while parsing the netlist file.');
@@ -239,7 +162,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																        fs.unlink(clkPath);
 																        fs.unlink(capPath);
 										        					}else{
-										        						console.log(cells);
+										        						//console.log(cells);
+										        						res.send('Success');
 										        						fs.unlink(stdcellPath); //Deleting uploaded file.
 																        fs.unlink(netlistPath);
 																        fs.unlink(clkPath);

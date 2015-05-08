@@ -413,7 +413,7 @@ function parseTableObject(data, templates){
 			var index2Data = getOpeartionRegex('index_2').exec(tableDef)[1];		
 			timingTable = new Table(template.y_axis, index1Data, template.x_axis, index2Data);
 			
-			var rowKeys = Object.keys(timingTable.table);
+			var rowKeys = timingTable.y_values;
 
 			var valuesRowsString = []; 
 			var quoteRegex = getQuotationsRegex();
@@ -427,7 +427,7 @@ function parseTableObject(data, templates){
 				console.log('Parsing (rows) error!');
 
 			for(var i = 0; i < rowKeys.length; i++){
-				var columnKeys = Object.keys(timingTable.table[rowKeys[i]]);
+				var columnKeys = timingTable.x_values;
 				var stringValues = valuesRowsString[i].trim().split(',');
 
 				if (stringValues.length != columnKeys.length)
@@ -457,7 +457,7 @@ function parseTableObject(data, templates){
 			if (valuesRowsString.length != 1)
 				console.log('Parsing (row) error!');
 
-			var rowKeys = Object.keys(timingTable.table);
+			var rowKeys = timingTable.y_values;
 
 			var stringValues = valuesRowsString[0].trim().split(',');
 
@@ -527,7 +527,7 @@ function parseCell(cellDefinition, templates){
 			newCell['pins'] = {};
 		var pinDef = pinScope.content;
 		var pinName = pinScope.scopeParams;
-		newCell.pins[pinName] = {};
+		newCell.pins[pinName] = {name: pinName};
 
 		
 
@@ -587,6 +587,7 @@ function extractCells(data, templates){
 	while((cellScope = extractScope(data, 'cell')).found){
 		var cellDefinition = cellScope.content;
 		result.cells[cellScope.scopeParams] = parseCell(cellDefinition, templates);
+		result.cells[cellScope.scopeParams].name = cellScope.scopeParams;
 		data = cellScope.slicedData;
 	}
 	result.slicedData = data.trim();
@@ -614,7 +615,7 @@ module.exports.parse = function(content, callback){
 	if(capacitiveLoadUnitRegex.test(content)){
 		var extracted = capacitiveLoadUnitRegex.exec(content);
 		library.capacitive_load_unit = {};
-		library['capacitive_load_unit'].value = parseInt(extracted[1]);
+		library['capacitive_load_unit'].value = parseFloat(extracted[1]);
 		library['capacitive_load_unit'].unit = extracted[2];
 		content = content.replace(getFunctionRegex('capacitive_load_unit'), '');
 	}
@@ -674,6 +675,9 @@ module.exports.parse = function(content, callback){
 	var extractedCells = extractCells(content, library.templates);
 	content = extractedCells.slicedData;
 	library.cells = extractedCells.cells;
-
+	library.cells['input'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: false, is_input: true, is_output: false, is_vdd: false, is_gnd: false};
+	library.cells['output'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: false, is_input: false, is_output: true, is_vdd: false, is_gnd: false};
+	library.cells['vdd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: true, is_gnd: false};
+	library.cells['gnd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: false, is_gnd: true};
 	callback(null, library);
 }

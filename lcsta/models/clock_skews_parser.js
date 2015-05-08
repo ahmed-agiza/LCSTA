@@ -1,4 +1,12 @@
 
 module.exports.parse = function(data, callback){
-	callback(null, 'Clock skews: '  + data);
+	var parsed;
+	try {
+        parsed = JSON.parse(data);
+    } catch (e) {
+    	console.log(e);
+        return callback('Invalid clock skews file', null);
+    }
+    
+	callback(null, parsed);
 }

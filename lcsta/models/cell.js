@@ -45,8 +45,8 @@ module.exports.cell = function(instanceName, libDef){
 	this.id = shortId.generate(); //Component ID.
 	this.inputs = {}; //Inputs objects.
 	this.outputs = {}; //Outputs objects.
-	this.ff = false; //Checking for sequential elements.
-	this.latch = false;
+	this.is_ff = false; //Checking for sequential elements.
+	this.is_latch = false;
 	this.instanceName = instanceName;
 
 	// For STA
@@ -60,13 +60,29 @@ module.exports.cell = function(instanceName, libDef){
 
 	this.setDefinition = function(def){ //Setting liberty file cell definition.
 		if(typeof(def) !== 'undefined'){
-			this.area = def.area;
-			this.cell_leakage_power = def.cell_leakage_power;
 			this.cellName = def.name;
-			this.inputPorts = def.inputs;
-			this.outputPort = def.outputs;
+			this.inputPorts = {};
+			this.outputPort = {};
+			this.unkownPorts = {};
+			for(var key in def.pins){
+				if (def.pins[key].direction == 'input'){
+					this.inputPorts[key] = def.pins[key];
+				}else if (def.pins[key].direction == 'output'){
+					this.outputPort[key] = def.pins[key];
+				}else{
+					this.unkownPorts[key] = def.pins[key];
+				}
+			}
 			this.inputs = {};
 			this.outputs ={};
+			var op = Object.keys(this.outputPort)[0];
+			this.outputs[op]= [];
+			this.is_ff = def.is_ff;
+			this.is_latch = def.is_latch;
+			if(!def.is_dummy){
+				this.area = def.area;
+				this.cell_leakage_power = def.cell_leakage_power;
+			}
 			for(var key in this.inputPorts){
 				this.inputs[this.inputPorts[key].name] = [];
 				// For STA
@@ -77,11 +93,10 @@ module.exports.cell = function(instanceName, libDef){
 					fall_transition: -1
 				};
 			}
-			var op = Object.keys(this.outputPort)[0];
-			this.outputs[op]= [];
-			this.is_ff = def.is_ff;
-			this.is_latch = def.is_latch;
-		}
+			
+
+		}else
+			console.log('No definition for ' + instanceName);
 	}
 
 	this.setDefinition(libDef);
