@@ -49,6 +49,15 @@ module.exports.cell = function(instanceName, libDef){
 	this.latch = false;
 	this.instanceName = instanceName;
 
+	// For STA
+	this.delays = {}; // An array of delays
+	this.input_slew = -1; // For the timing table
+	this.capacitance_load = -1; // For the timing table
+	this.AAT; // Actual Arrival Time
+	this.RAT; // Required Arrival Time
+	this.slack; // Gate slack
+
+
 	this.setDefinition = function(def){ //Setting liberty file cell definition.
 		if(typeof(def) !== 'undefined'){
 			this.area = def.area;
@@ -58,8 +67,16 @@ module.exports.cell = function(instanceName, libDef){
 			this.outputPort = def.outputs;
 			this.inputs = {};
 			this.outputs ={};
-			for(var key in this.inputPorts)
+			for(var key in this.inputPorts){
 				this.inputs[this.inputPorts[key].name] = [];
+				// For STA
+				this.delays[this.inputPorts[key].name] = {
+					cell_rise: -1,
+					cell_fall: -1,
+					rise_transition: -1,
+					fall_transition: -1
+				};
+			}
 			var op = Object.keys(this.outputPort)[0];
 			this.outputs[op]= [];
 			this.is_ff = def.is_ff;
