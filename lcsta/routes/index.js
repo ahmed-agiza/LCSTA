@@ -4,7 +4,9 @@ var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
 var flash = require('connect-flash');
+var TPS = require('../node_modules/thinplate/thinplate');
 var router = express.Router();
+
 
 var VerilogParser = require('../models/netlist_parser');
 var LibertyParser = require('../models/liberty_parser');
@@ -43,6 +45,80 @@ router.get('/report', function(req, res){ //Timing report view.
 	req.flash('error', 'Please select a Verilog netlist file to process.')
 	res.redirect('/');
 });
+
+
+/*function testInterpolate(points){
+	var tps = new TPS();
+
+  var fitpoints = points;
+
+  // we'll set the target to the be y value of each point
+  // this will generate a curve that goes through our fitpoints
+  var targets = fitpoints.map(function(curr){
+      return curr[curr.length-1];
+  });
+
+  //compile requires fitpoints, target and a callback
+  // callback returns error if there is one
+  tps.compile(fitpoints, targets, function(err){
+    if(err){
+      console.error(err);
+      return;
+    }
+
+    //now that it compiled we can use it.
+
+    //fill out some random points to interpolate
+    // (interpolation happens within the fitpoint boundaries)
+    var pnts = [];
+    for(var i = 0 ; i < 20; i++){
+      pnts.push([Math.random() * 0.8, Math.random() * 0.8]);
+    }
+
+    //have the tps solve for the values!
+    tps.getValues(pnts, function(err, result){
+
+        if(err) {
+          console.error(err);
+          return;
+        }
+
+        console.dir(result);
+      });
+
+    //fill out some random points to extrapolate
+    // (extrapolation happens outside the fitpoint boundaries)
+    var pnts = [];
+    for(var i = 0 ; i < 20; i++){
+      pnts.push([0.8 + Math.random() * 0.8,  0.8 + Math.random() * 0.8]);
+    }
+
+    //have the tps solve for the values!
+    tps.getValues(pnts, function(err, result){
+
+        if(err) {
+          console.error(err);
+          return;
+        }
+
+        console.dir(result);
+      });
+
+     //have the tps solve for the values!
+    tps.getValues(points, function(err, result){
+
+        if(err) {
+          console.error(err);
+          return;
+        }
+
+        console.dir(result);
+      });
+
+
+  });
+
+};*/
 
 
 router.post('/report', function(req, res){ //Generate timing report.
@@ -89,7 +165,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 		        fs.unlink(clkPath);
 		        fs.unlink(capPath);
 		    }else{
-		    	LibertyParser.parse(stdcellData, function(err, stdcell){
+		    	LibertyParser.parse(stdcellData, function(err, stdcells){
 		    		if(err){
 		    			console.log(err);
 		    			req.flash('error', 'Error while parsing the standard cell file.');
@@ -99,7 +175,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(clkPath);
 						fs.unlink(capPath);
 		    		}else{
-		    			res.send(stdcell);
+		    			res.send(stdcells);			
 		    			return;
 		    			fs.readFile(capPath, 'utf8', function(err, capData){
 		    				if(err){

@@ -4,6 +4,8 @@ var Cell = require('./cell').cell;
 var Connect = require('./cell').connect;
 var TemplateCell = require('./cell').templateCell;
 
+var TPS = require('../node_modules/thinplate/thinplate');
+
 
 /****Regular Expressions Generators****/
 function getAttributeRegex(attr){
@@ -108,6 +110,8 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 	this.max_y = getMaximum(this.y_values);
 
 	this.table = {};
+	this.points = [];
+	this.targets = [];
 
 	for(var i = 0; i < this.y_values.length; i++){
 		this.table[this.y_values[i]] = 0;		
@@ -121,38 +125,106 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 		this.x_values = extractAxisValues(var2Data);
 		this.min_x = getMinimum(this.x_values);
 		this.max_x = getMaximum(this.x_values);
+
 		for(var i = 0; i < this.y_values.length; i++){
 			this.table[this.y_values[i]] = {};
 			for(var j = 0; j < this.x_values.length; j++)
 				this.table[this.y_values[i]][this.x_values[j]] = 0;		
 		}
+
 		this.setData = function(row, column, value){
+
+			if(typeof row === 'string')
+				row = parseFloat(row);
+			if (typeof column === 'string')
+				column = parseFloat(column);
+			if (typeof value === 'string')
+				value = parseFloat(value);
+
 			if(typeof this.table[row] === 'undefined' || typeof this.table[row][column] === 'undefined'){
 				console.log('No axis value!');
-			}else
+			}else{
 				this.table[row][column] = value;
+				var point = [row, column];
+				if (this.points.indexOf(point) === -1){
+					this.points.push(point);
+					this.targets.push(value);
+				}
+			}
 		}
-		this.getData = function(row, column){
-			if(typeof this.table[row] === 'undefined' || typeof this.table[row][column] === 'undefined'){
-				console.log('Interpolate for ' + row + ', ' + column);
-			}else
-				return this.table[row][column];
-		}
+		this.getData = function(row, column, cb){
+
+			if(typeof(row) === 'string')
+				row = parseFloat(row);
+
+			if (typeof(column) === 'string')
+				column = parseFloat(column);
+
+			var tps = new TPS();
+
+			tps.compile(this.points, this.targets, function(err){
+			    if(err){
+			      console.log(err);
+			      cb(err, null);
+			    }
+			    var targetPoint = [row, column];
+			    tps.getValues([targetPoint], function(err, result){
+			        if(err) {
+			          console.log(err);
+			          cb(err, null);
+			        }
+
+			        return cb(null, result.ys[0]);
+			    });
+			});
+		};
 
 	}else{
 		this.dim = 1;
 		this.setData = function(column, value){
+			if (typeof column === 'string')
+				column = parseFloat(column);
+			if (typeof value === 'string')
+				value = parseFloat(value);
+
 			if(typeof this.table[column] === 'undefined'){
 				console.log('No axis value!');
-			}else
+			}else{
 				this.table[column] = value;
+
+				var point = [column];
+				if (this.points.indexOf(point) === -1){
+					this.points.push(point);
+					this.targets.push(value);
+				}
+
+			}
 		}
 
-		this.getData = function(column){
-			if(typeof this.table[column] === 'undefined'){
-				console.log('Interpolate for ' + column);
-			}else
-				return this.table[column];
+		this.getData = function(column, cb){
+
+			if (typeof(column) === 'string')
+				column = parseFloat(column);
+
+			var tps = new TPS();
+
+			tps.compile(this.points, this.targets, function(err){
+			    if(err){
+			      console.log(err);
+			      cb(err, null);
+			    }
+
+			    var targetPoint = [column];
+
+			    tps.getValues([targetPoint], function(err, result){
+			        if(err) {
+			          console.log(err);
+			          cb(err, null);
+			        }
+
+			        return cb(null, result.ys[0]);
+			    });
+			});
 		}
 
 	}
