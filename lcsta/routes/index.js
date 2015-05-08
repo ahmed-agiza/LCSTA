@@ -99,30 +99,29 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(clkPath);
 						fs.unlink(capPath);
 		    		}else{
-		    			//console.log(stdcell);
 		    			res.send(stdcell);
 		    			return;
-		    			fs.readFile(netlistPath, 'utf8', function(err, netlistData){
+		    			fs.readFile(capPath, 'utf8', function(err, capData){
 		    				if(err){
 				    			console.log(err);
-				    			req.flash('error', 'Error while reading the netlist file.');
+				    			req.flash('error', 'Error while reading the net capacitances file.');
 				        		res.redirect('/');
 				        		fs.unlink(stdcellPath); //Deleting uploaded file.
 						        fs.unlink(netlistPath);
 						        fs.unlink(clkPath);
 						        fs.unlink(capPath);
 				    		}else{
-				    			VerilogParser.parse(netlistData, function(err, cells){
+				    			CapParser.parse(capData, function(err, caps){
 				    				if(err){
 						    			console.log(err);
-						    			req.flash('error', 'Error while parsing the netlist file.');
+						    			req.flash('error', 'Error while reading the net capacitances file.');
 						        		res.redirect('/');
 						        		fs.unlink(stdcellPath); //Deleting uploaded file.
 								        fs.unlink(netlistPath);
 								        fs.unlink(clkPath);
 								        fs.unlink(capPath);
 						        	}else{
-						        		console.log(cells);
+						        		console.log(caps);
 						        		fs.readFile(clkPath, 'utf8', function(err, clkData){
 						        			if(err){
 								    			console.log(err);
@@ -144,44 +143,43 @@ router.post('/report', function(req, res){ //Generate timing report.
 												        fs.unlink(capPath);
 								        			}else{
 								        				console.log(skews);
-								        				fs.readFile(capPath, 'utf8', function(err, capData){
+								        				fs.readFile(netlistPath, 'utf8', function(err, netlistData){	
 								        					if(err){
 								        						console.log(err);
-												    			req.flash('error', 'Error while reading the net capacitances file.');
+												        		req.flash('error', 'Error while reading the netlist file.');
 												        		res.redirect('/');
 												        		fs.unlink(stdcellPath); //Deleting uploaded file.
 														        fs.unlink(netlistPath);
 														        fs.unlink(clkPath);
 														        fs.unlink(capPath);
 								        					}else{
-								        						CapParser.parse(capData, function(err, caps){
+								        						VerilogParser.parse(netlistData, function(err, cells){
 								        							if(err){
 										        						console.log(err);
-														    			req.flash('error', 'Error while parsing the net capacitances file.');
+														    			req.flash('error', 'Error while parsing the netlist file.');
 														        		res.redirect('/');
 														        		fs.unlink(stdcellPath); //Deleting uploaded file.
 																        fs.unlink(netlistPath);
 																        fs.unlink(clkPath);
 																        fs.unlink(capPath);
 										        					}else{
-										        						console.log(caps);
-										        						res.send('true');
+										        						console.log(cells);
 										        						fs.unlink(stdcellPath); //Deleting uploaded file.
 																        fs.unlink(netlistPath);
 																        fs.unlink(clkPath);
 																        fs.unlink(capPath);
 										        					}
-								        						})/****END PARSE CAP FILE****/
+								        						})/****END PARSE NETLIST FILE****/
 								        					}
-								        				});/****END READ CAP FILE****/
+								        				});/****END READ NETLIST FILE****/
 								        			}
 								        		});/****END PARSE CLK FILE****/
 								        	}
 						        		});/****END READ CLK FILE****/
 						        	}
-				    			}); /****END PARSE NETLIST****/
+				    			}); /****END PARSE CAP FILE****/
 				    		}
-		    			});/****END READ NETLIST****/
+		    			});/****END READ CAP FILE****/
 		    		}
 		    		
 		    	});/****END PARSE STDCELL****/
