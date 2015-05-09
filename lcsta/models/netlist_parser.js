@@ -232,7 +232,6 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 					}
 				}
 			}
-			console.log('---------------------');
 		}/***End of moduleRegex.test.***/
 
 	}); /****End of lines.forEach*****/
@@ -254,11 +253,20 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			for(var i = 0; i < wires[key].outputs.length; i++){
 				if(Object.keys(wires[key].input).length === 0 || typeof(wires[key].outputs[i]) === undefined || Object.keys(wires[key].outputs[i]).length === 0){
 					console.log('Flying wire ' + key);
-					warnings.push('Flying wire ' + key)
+					warnings.push('Flying wire ' + key);
 				}else{
-					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port);
+					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port, wires[key].net_capacitance);
 				}
 			}
+	}
+
+	for(var key in cells){
+		if(cells[key].isFF()){
+			if(typeof skews !== 'undefined' && typeof skews[key] !== 'undefined')
+				cells[key].clock_skew = skews[key];
+			else
+				cells[key].clock_skew = 0;
+		}	
 	}
 	
 

@@ -681,3 +681,4 @@ module.exports.parse = function(content, callback){
 	library.cells['gnd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: false, is_gnd: true};
 	callback(null, library);
 }
+

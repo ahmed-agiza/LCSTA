@@ -162,7 +162,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 																        fs.unlink(clkPath);
 																        fs.unlink(capPath);
 										        					}else{
-										        						//console.log(cells);
 										        						res.send('Success');
 										        						fs.unlink(stdcellPath); //Deleting uploaded file.
 																        fs.unlink(netlistPath);

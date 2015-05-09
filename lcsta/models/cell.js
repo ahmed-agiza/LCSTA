@@ -130,11 +130,14 @@ module.exports.cell = function(instanceName, libDef){
 
 
 
-module.exports.connect = function(source, target, portName){
+module.exports.connect = function(source, target, portName, netCap){
 	if(typeof(target.inputPorts[portName]) !== 'undefined'){
 		if(target.inputs[portName].indexOf(source) == -1){
 			var op = Object.keys(source.outputPort)[0];
 			source.outputs[source.outputPort[op].name].push(target);
+			if(typeof netCap !== 'undefined')
+				source.outputPort[op].net_capacitance = netCap;
+
 			target.inputs[portName].push(source);
 		}else{
 			console.log('Connection already exists.');
