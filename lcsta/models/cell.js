@@ -37,6 +37,18 @@ var port = function(name, direction, capacitance, rise_capacitance, fall_capacit
 		this.net_capacitance = 0;
 	else
 		this.net_capacitance = net_capacitance;
+
+	//For STA
+	this.input_slew = { // To be used with the timing table
+		rise_transition: -1,
+		fall_transition: -1
+	};
+	this.delays = {
+		cell_rise: -1,
+		cell_fall: -1,
+		rise_transition: -1,
+		fall_transition: -1
+	};
 }
 
 module.exports.port = port;
@@ -51,12 +63,11 @@ module.exports.cell = function(instanceName, libDef){
 
 	// For STA
 	this.delays = {}; // An array of delays
-	this.input_slew = -1; // For the timing table
-	this.capacitance_load = -1; // For the timing table
 	this.AAT; // Actual Arrival Time
 	this.RAT; // Required Arrival Time
 	this.slack; // Gate slack
-
+	this.clock_skew; // Clock skew: Used for FF only
+	this.capacitance_load; // To be used with the timing table
 
 	this.setDefinition = function(def){ //Setting liberty file cell definition.
 		if(typeof(def) !== 'undefined'){
@@ -85,13 +96,6 @@ module.exports.cell = function(instanceName, libDef){
 			}
 			for(var key in this.inputPorts){
 				this.inputs[this.inputPorts[key].name] = [];
-				// For STA
-				this.delays[this.inputPorts[key].name] = {
-					cell_rise: -1,
-					cell_fall: -1,
-					rise_transition: -1,
-					fall_transition: -1
-				};
 			}
 			
 
