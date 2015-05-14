@@ -77,12 +77,16 @@ var STA = function(gates, constraints){ // Constructor
 	var GetInputPort = function(parent, child){
 		for(var key in child.inputPorts)
 			if(child.inputs[child.inputPorts[key].name] == parent)
-				return child.inputPorts[key].name;
+				return child.inputPorts[key];
 	};
 
 	var AssignAAT = function(){
+		var calculated_capacitance = new Array(this.gates.length);
 		var queue = new Array();
 		int current;
+		for(var i=0; i<calculated_capacitance.length; i++){
+			calculated_capacitance[i] = false;
+		}
 		this.level[0] = 0;
 		queue.push(0); // Push Origin
 		while(queue.length > 0){
@@ -94,11 +98,18 @@ var STA = function(gates, constraints){ // Constructor
 					if(node.getInputs.length == 0) // Input pin
 						InitializeInputPort(node);
 					else if(node.isFF) // FF
-						InitializeFF(node, current);
+						InitializeFF(node, this.timing_graph[current][i].gate);
 				}
 				else{
-					CalculateCapacitance(node, current); // Get capacitance loading the cell
-					// Compute the AAT of this gate by getting the maximum of the previous delays 
+					// Compute the capacitance load of the child node
+					if(!calculated_capacitance[this.timing_graph[current][i].gate]){ // If not previously computed
+						CalculateCapacitance(node, this.timing_graph[current][i].gate); // Get capacitance loading the cell
+						calculated_capacitance[this.timing_graph[current][i].gate] = true; // Processed
+					}
+
+					ComputeDelay(node, this.timing_graph[current][i].port);
+					UpdateAAT(this.gates[current], node, this.timing_graph[current][i].port);
+					// Compute the AAT of this gate by comparing it with the current AAT
 				}
 			}
 		}
@@ -124,17 +135,19 @@ var STA = function(gates, constraints){ // Constructor
 		CalculateCapacitance(start_node, node_index); // Calculate total capacitance on gate
 
 		// AAT
+		var clock_port;
 		start_node.AAT = start_node.clock_skew; // Clock skew added to AAT
 		for(var key in start_node.inputPorts){
 			if(start_node.inputPorts[key].clock){ // If this is the clock port get the input slew rate for it
+				clock_port = start_node.inputPorts[key];
 				start_node.inputPorts[key].input_slew.rise_transition = this.input_slew[start_node.instanceName].rise_transition;
 				start_node.inputPorts[key].input_slew.fall_transition = this.input_slew[start_node.instanceName].fall_transition;
 			}
 		}
-		ComputeDelay(start_node); // Get the 4 delay values for the node
+		ComputeDelay(start_node, clock_port); // Get the delay values for the node
 		for(var key in start_node.inputPorts){ // Tcq added to AAT
 			if(start_node.inputPorts[key].clock){
-				start_node.AAT += max(start_node.inputPorts[key].delays.cell_rise, start_node.inputPorts[key].delays.cell_fall);
+				start_node.AAT += max(start_node.inputPorts[key].delays.max.cell_rise, start_node.inputPorts[key].delays.max.cell_fall);
 			}
 		}
 		// Computed output slew rates and node AAT
@@ -156,19 +169,29 @@ var STA = function(gates, constraints){ // Constructor
 		}
 	};
 
-	var ComputeDelay = function(node){
+	var ComputeDelay = function(node, input_port){ // Compute the maximum and minimum gate delay and output slew rate for a given input port
 		for(var output in node.outputPorts){ // Most cases we have one output port
-			for(var input in node.inputPorts){
-				var input_port = node.inputPorts[input];
-				var output_port = node.outputPorts[output];
-				var max_input_slew = max(input_port.input_slew.rise_transition, input_port.input_slew.fall_transition);
+			var output_port = node.outputPorts[output];
+			// Maximum and minimum input slew rates
+			var max_input_slew = max(input_port.input_slew.rise_transition, input_port.input_slew.fall_transition);
+			var min_input_slew = min(input_port.input_slew.rise_transition, input_port.input_slew.fall_transition);
 
-				input_port.delays.cell_rise = output_port[input_port.name].timing.cell_rise.getData(max_input_slew, node.capacitance_load);
-				input_port.delays.cell_fall = output_port[input_port.name].timing.cell_fall.getData(max_input_slew, node.capacitance_load);
-				input_port.inputPorts[input].delays.rise_transition = output_port[input_port.name].timing.rise_transition.getData(max_input_slew, node.capacitance_load);
-				input_port.inputPorts[input].delays.fall_transition = output_port[input_port.name].timing.fall_transition.getData(max_input_slew, node.capacitance_load);
-			}
+			// Max delays
+			input_port.delays.max.cell_rise = output_port[input_port.name].timing.cell_rise.getData(max_input_slew, node.capacitance_load);
+			input_port.delays.max.cell_fall = output_port[input_port.name].timing.cell_fall.getData(max_input_slew, node.capacitance_load);
+			input_port.delays.max.rise_transition = output_port[input_port.name].timing.rise_transition.getData(max_input_slew, node.capacitance_load);
+			input_port.delays.max.fall_transition = output_port[input_port.name].timing.fall_transition.getData(max_input_slew, node.capacitance_load);
+
+			// Min delays
+			input_port.delays.min.cell_rise = output_port[input_port.name].timing.cell_rise.getData(min_input_slew, node.capacitance_load);
+			input_port.delays.min.cell_fall = output_port[input_port.name].timing.cell_fall.getData(min_input_slew, node.capacitance_load);
+			input_port.delays.min.rise_transition = output_port[input_port.name].timing.rise_transition.getData(min_input_slew, node.capacitance_load);
+			input_port.delays.min.fall_transition = output_port[input_port.name].timing.fall_transition.getData(min_input_slew, node.capacitance_load);
 		}
+	};
+
+	var UpdateAAT = function(parent, child, input_port){
+		child.AAT = max(child.AAT, parent.AAT + max(input_port.delays.max.cell_rise, input_port.delays.max.cell_fall));
 	};
 };
 

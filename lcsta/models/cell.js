@@ -37,18 +37,6 @@ var port = function(name, direction, capacitance, rise_capacitance, fall_capacit
 		this.net_capacitance = 0;
 	else
 		this.net_capacitance = net_capacitance;
-
-	//For STA
-	this.input_slew = { // To be used with the timing table
-		rise_transition: -1,
-		fall_transition: -1
-	};
-	this.delays = {
-		cell_rise: -1,
-		cell_fall: -1,
-		rise_transition: -1,
-		fall_transition: -1
-	};
 }
 
 module.exports.port = port;
@@ -61,13 +49,30 @@ module.exports.cell = function(instanceName, libDef){
 	this.is_latch = false;
 	this.instanceName = instanceName;
 
-	// For STA
-	this.delays = {}; // An array of delays
-	this.AAT; // Actual Arrival Time
-	this.RAT; // Required Arrival Time
-	this.slack; // Gate slack
+	// -------------------------For STA--------------------------------
+	this.AAT = 0; // Actual Arrival Time
+	this.RAT = 0; // Required Arrival Time
+	this.slack = 0; // Gate slack
 	this.clock_skew; // Clock skew: Used for FF only
-	this.capacitance_load; // To be used with the timing table
+	this.isClock = false; // Is the node the clock pin
+
+	this.input_slew = { // Maximum and minimum input slew rates
+		max: -1,
+		min: Number.MAX_VALUE
+	};
+	this.capacitance_load = { // Maximum and minimum capacitance loads
+		max: 0,
+		min: 0
+	};
+	this.output_slew = { // Maximum and minimum output slew rates
+		max: -1,
+		min: Number.MAX_VALUE
+	};
+	this.gate_delay = { // Maximum and minimum gate delays
+		max: -1,
+		min: Number.MAX_VALUE
+	};
+	// ----------------------------------------------------------------
 
 	this.setDefinition = function(def){ //Setting liberty file cell definition.
 		if(typeof(def) !== 'undefined'){
