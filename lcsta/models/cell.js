@@ -220,29 +220,7 @@ module.exports.cell = function(instanceName, libDef, libRef){
 
 	};
 
-	this.resizeBelowInclusive = function(value){
-		if(value <= 0)
-			throw "Invalid size " + value;
-		var newSize = this.getMinimumSize();
-		for(var key in this._alter_definitions){
-			var size = parseInt(key);
-			if(size > newSize && size <= value)
-				newSize = size;
-		}
-		return this.resizeTo(newSize);
-	};
-
-	this.resizeAboveInclusive = function(value){
-		if(value <= 0)
-			throw "Invalid size " + value;
-		var newSize = this.getMaximumSize();
-		for(var key in this._alter_definitions){
-			var size = parseInt(key);
-			if(size < newSize && size >= value)
-				newSize = size;
-		}
-		return this.resizeTo(newSize);
-	};
+	
 
 	this.resizeBetweenMinimum = function(min, max){
 
