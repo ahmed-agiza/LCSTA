@@ -116,7 +116,7 @@ var STA = function(gates, constraints){ // Constructor
 						this.clock_node.gate_delay.max = 0;
 						this.clock_node.gate_delay.min = 0;
 
-						input_slew = this.input_slew[this.clock_node.instanceName];
+						input_slew = this.input_slew[this.clock_node.instance_name];
 						this.clock_node.input_slew.max = max(input_slew.rise_transition, input_slew.fall_transition);
 						this.clock_node.input_slew.min = min(input_slew.rise_transition, input_slew.fall_transition);
 
@@ -178,8 +178,8 @@ var STA = function(gates, constraints){ // Constructor
 		// AAT
 		var input_delay;
 		var input_slew;
-		if(start_node.instanceName in this.input_delays){
-			input_delay = this.input_delays[start_node.instanceName];
+		if(start_node.instance_name in this.input_delays){
+			input_delay = this.input_delays[start_node.instance_name];
 			start_node.gate_delay.max = max(input_delay.cell_rise, input_delay.cell_fall);
 			start_node.gate_delay.min = min(input_delay.cell_rise, input_delay.cell_fall);
 		}
@@ -190,8 +190,8 @@ var STA = function(gates, constraints){ // Constructor
 		start_node.AAT = start_node.gate_delay.max // Input delay added
 
 		// Input slew
-		if(start_node.instanceName in this.input_slew){
-			input_slew = this.input_slew[start_node.instanceName];
+		if(start_node.instance_name in this.input_slew){
+			input_slew = this.input_slew[start_node.instance_name];
 			start_node.input_slew.max = max(input_slew.rise_transition, input_slew.fall_transition);
 			start_node.input_slew.min = min(input_slew.rise_transition, input_slew.fall_transition);
 		}
@@ -233,8 +233,8 @@ var STA = function(gates, constraints){ // Constructor
 				child = this.gates[child_index];
 
 				// Add the net capacitance to both the minimum and the maximum
-				node.capacitance_load.max += node.outputPorts[key].net_capacitance[child.instanceName][child.port];
-				node.capacitance_load.min += node.outputPorts[key].net_capacitance[child.instanceName][child.port];
+				node.capacitance_load.max += node.outputPorts[key].net_capacitance[child.instance_name][child.port];
+				node.capacitance_load.min += node.outputPorts[key].net_capacitance[child.instance_name][child.port];
 
 				// Add the maximum and minimum capacitance as a result of the child port
 				node.capacitance_load.max += max(child.port.rise_capacitance, child.port.fall_capacitance);

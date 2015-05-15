@@ -162,7 +162,130 @@ router.post('/report', function(req, res){ //Generate timing report.
 																        fs.unlink(clkPath);
 																        fs.unlink(capPath);
 										        					}else{
-										        						res.send('Success');
+										        						var cellReports = [
+											        											{
+											        												name: '_1_', //Dummy Data!
+											        												module: 'AND2X1',
+	 																								arrival_time: 0.5,
+	 																								required_time: 0.5,
+	 																								slack: 0.5,
+	 																								timing_violation: false},
+											        											{
+											        												name: '_2_',
+											        												module: 'AND2X2',
+	 																								arrival_time: 0.2,
+	 																								required_time: 0.3,
+	 																								slack: 0.6,
+	 																								timing_violation: false},
+											        											{
+											        												name: '_3_',
+											        												module: 'DFF2X1',
+	 																								arrival_time: 0.5,
+	 																								required_time: 0.1,
+	 																								slack: 0.2,
+	 																								timing_violation: true},
+											        											{
+											        												name: '_4_',
+											        												module: 'INVX8',
+	 																								arrival_time: 0.05,
+	 																								required_time: 0.02,
+	 																								slack: 0.03,
+	 																								timing_violation: false}
+ 																							];
+										        						var generalReports = {
+										        												ipsum: 'quis blandit magna',
+										        												dolor: 0.02,
+										        												sit: 0.2,
+										        												amet: 'mattis pulvinar turpis',
+										        												consectetur: 0.06,
+										        												adipiscing: 'elit',
+										        												proin: 120
+										        											  };
+										        						var cellsContents = [];
+										        						var stdCellsContent = [];
+										        						for(var key in cells){
+										        							if(!cells[key].is_dummy && !cells[key].is_input && !cells[key].is_output){
+											        							var cellItem = {};
+											        							cellItem.name = cells[key].instanceName;
+											        							var cellInputs = cells[key].getInputs();
+											        							var cellOutputs = cells[key].getOutputs();
+											        							if(typeof cellInputs !== 'undefined')
+											        								cellItem.number_of_inputs = cells[key].getInputs().length;
+											        							else
+											        								cellItem.number_of_inputs = 0;
+											        							if(typeof cellOutputs !== 'undefined')
+											        								cellItem.number_of_outputs = cells[key].getOutputs().length;
+											        							else
+											        								cellItem.number_of_outputs = 0;
+
+											        							cellItem.size = cells[key].size;
+											        							cellItem.module = cells[key].cellName;
+											        							cellsContents.push(cellItem);
+										        							}
+										        						}
+
+										        						for(var key in stdcells.cells){
+										        							var cell = stdcells.cells[key];
+											        						if(!cell.is_dummy && !cell.is_input && !cell.is_output){
+											        							var cellItem = {};
+											        							cellItem.name = key;
+											        							if(typeof cell.area !== 'undefined')
+											        								cellItem.area = cell.area;
+											        							else
+											        								cellItem.area = 'N/A';
+
+											        							if(typeof cell.cell_leakage_power !== 'undefined')
+											        								cellItem.cell_leakage_power = cell.cell_leakage_power;
+											        							else
+											        								cellItem.cell_leakage_power = 'N/A';
+											        							var inputPins = [],
+											        								outputPins = [];
+											        							for(var pinKey in cell.pins){
+											        								if(cell.pins[pinKey].direction == 'input')
+											        									inputPins.push(pinKey);
+											        								else if (cell.pins[pinKey].direction == 'output')
+											        									outputPins.push(pinKey);
+											        							}
+
+											        							if(inputPins.length == 0){
+											        								cellItem.input_pins = '[]';
+											        							}else if (inputPins.length == 1){
+											        								cellItem.input_pins = '[' + inputPins[0] + ']';
+											        							}else{
+											        								cellItem.input_pins = '[' + inputPins[0];
+											        								for(var i = 1; i < inputPins.length; i++){
+											        									if(i != inputPins.length - 1)
+											        										cellItem.input_pins = cellItem.input_pins + ', ' + inputPins[i];
+											        									else
+											        										cellItem.input_pins = cellItem.input_pins + ', ' + inputPins[i] + ']';
+											        								}
+											        							}
+
+											        							if(outputPins.length == 0){
+											        								cellItem.output_pins = '[]';
+											        							}else if (outputPins.length == 1){
+											        								cellItem.output_pins = '[' + outputPins[0] + ']';
+											        							}else{
+											        								cellItem.output_pins = '[' + outputPins[0];
+											        								for(var i = 1; i < outputPins.length; i++){
+											        									if(i != outputPins.length - 1)
+											        										cellItem.output_pins = cellItem.output_pins + ', ' + outputPins[i];
+											        									else
+											        										cellItem.output_pins = cellItem.output_pins + ', ' + outputPins[i] + ']';
+											        								}
+											        							}
+											        							stdCellsContent.push(cellItem);
+											        						}
+										        						}
+										        						
+										        						res.render('report', {title: 'Timing Report',
+										        											  error: '',
+										        											  warnings: '[]',
+										        											  verilog_code: netlistData,
+										        											  netlist_cells: JSON.stringify(cellsContents),
+										        											  stdcells: JSON.stringify(stdCellsContent),
+										        											  cell_reports: JSON.stringify(cellReports),
+										        											  general_report: JSON.stringify(generalReports)});
 										        						fs.unlink(stdcellPath); //Deleting uploaded file.
 																        fs.unlink(netlistPath);
 																        fs.unlink(clkPath);

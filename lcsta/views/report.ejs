@@ -1,107 +1,193 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>LCSTA | <%=title%></title>
-    <link rel="icon" type="image/ico" href="images/favicon.ico">
-
-    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
-    <link rel="stylesheet" href="/stylesheets/style.css" />
-    <script src="/javascripts/jquery-2.1.3.min.js"></script>
-    <script src="/javascripts/bootstrap.min.js"></script>
-    <style type="text/css">
-        #editor { 
+    <head>
+        <title>LCSTA | <%=title%></title>
+        <link rel="icon" type="image/ico" href="images/favicon.ico">
+        <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+        <link rel="stylesheet" href="/stylesheets/style.css" />
+        <script src="/javascripts/jquery-2.1.3.min.js"></script>
+        <script src="/javascripts/bootstrap.min.js"></script>
+        <script type="text/javascript">
+            function expandStdcell(){
+                $('.stdcells-items').collapse('show');
+            };
+            function collapseStdcell(){
+                $('.stdcells-items').collapse('hide');
+            };
+            function expandNetlist(){
+                $('.netlist-items').collapse('show');
+            };
+            function collapseNetlist(){
+                $('.netlist-items').collapse('hide');
+            };
+            function expandGates(){
+                $('.gate-report-items').collapse('show');
+            };
+            function collapseGates(){
+                $('.gate-report-items').collapse('hide');
+            };
+        </script>
+        <style type="text/css">
+            #editor { 
             height: 80vh;
             width: 80vw;
-        }
-    </style>
-
-    <div class = "row-header row">
-        <div class = "col-lg-12 centered col-header">
-            <ul id="tabs" class="nav nav-tabs navbar-header">
-                        <li><a href="/" class= "navbar-branding" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">LCSTA</a></li>
-                         <li style="height: 100%;"><a href="/about" class= "navbar-element" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">About</a></li>
-            </ul>
+            }
+        </style>
+        <div class = "row-header row">
+            <div class = "col-lg-12 centered col-header">
+                <ul id="tabs" class="nav nav-tabs navbar-header">
+                    <li><a href="/" class= "navbar-branding" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">LCSTA</a></li>
+                    <li style="height: 100%;"><a href="/about" class= "navbar-element" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">About</a></li>
+                </ul>
+            </div>
         </div>
-    </div>
-
-</head>
-<body>
-
-
-
-    <div class="container container-circuit round" id="tabs-container">
-       
+    </head>
+    <body>
+        <div class="container container-circuit round" id="tabs-container">
         <div id="content">
             <div class="row" id="tabs-rows">
                 <ul id="circuit-tabs" class="nav nav-tabs navbar-header" style="padding-left: 1em;">
-                    <li><a href="#netlist" class="tab-element" data-toggle="tab">Netlist File</a></li>
+                    <li><a href="#netlist" class="tab-element" data-toggle="tab">Netlist</a></li>
+                    <li><a href="#stdcells" class="tab-element" data-toggle="tab">Standard Cells</a></li>
                     <%if (error == ''){%>
-                        <li><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
-                        <li class="active" id="cricuit-tab-li"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                        <li><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Error Log</a></li>
+                        <li class="active" id="report-tabl-li"><a href="#report" class="tab-element" data-toggle="tab">STA Report</a></li>
                     <%}else{%>
-                        <li class = "active"><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
-                        <li id="cricuit-tab-li"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                        <li class = "active"><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Error Log</a></li>
+                        <li id="report-tabl-li"><a href="#circuit" class="tab-element" data-toggle="tab">STA Report</a></li>
                     <%}%>
                 </ul>
             </div>
             <div class="row row-tab">
-                    <div id="my-tab-content" class="tab-content">
+                <div id="my-tab-content" class="tab-content">
+                    
                     <%if (error == ''){%>
-                        <div class="tab-pane active" id="circuit">
+                        <div class="tab-pane active" id="report">
                     <%}else{%>
-                        <div class="tab-pane" id="circuit">
+                        <div class="tab-pane" id="report">
                     <%}%>
-                            <div id="paper" class="paper"></div>
-                            <link rel="stylesheet" href="/stylesheets/joint.css" />
-                            <link rel="stylesheet" href="/stylesheets/logic.css" />
-                            <script src="/javascripts/joint.js"></script> 
-                            <script src="/javascripts/joint.shapes.logic.js"></script> 
-                            <script src="/javascripts/logic.js"></script>
-                            <script src="/javascripts/visualizer.js"></script>
-                            <script type="text/javascript">
-                                var graphGates = JSON.parse('<%-graphGates%>');
-                                var graphWires = JSON.parse('<%-graphWires%>');
-                                var graphMapper = JSON.parse('<%-graphMapper%>');
-                                var connectionWires = JSON.parse('<%-connectionWires%>');
-                                plotGraph(graphGates, graphWires, graphMapper, connectionWires);
-                                fitView(); 
-                            </script>
+                            <div id="report-menu">
+                                <div class="panel list-group">
+                                    <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-gates-report"><strong>Gates Report</strong></a>
+                                    <div id="collapse-gates-report" class="sublinks report-items collapse">
+                                        
+                                        <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="expandGates();">Expand All</button> &nbsp; <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="collapseGates();">Collapse All</button>
+                                        
+                                        <%cell_reports = JSON.parse(cell_reports)%>
+                                        <div id="cell-report-menu">
+                                            <div class="panel list-group">
+                                                <%cell_reports.forEach(function(cell){%>
+                                                <%if(cell.timing_violation){%>
+                                                    <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Timing Viloation)</strong></a>
+                                                     <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
+                                                        <a class="list-group-item violation">Arrival time: <%= cell.arrival_time%></a>
+                                                        <a class="list-group-item violation">Required time: <%= cell.required_time%></a>
+                                                        <a class="list-group-item violation">Slack: <%= cell.slack%></a>
+                                                    </div>
+                                                <%}else{%>
+                                                    <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%></strong></a>
+                                                    <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
+                                                        <a class="list-group-item">Arrival time: <%= cell.arrival_time%></a>
+                                                        <a class="list-group-item">Required time: <%= cell.required_time%></a>
+                                                        <a class="list-group-item">Slack: <%= cell.slack%></a>
+                                                    </div>
+                                                <%}%>
+                                               
+                                                <%})%>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-timing-report"><strong>Timing Analysis</strong></a>
+                                    <div id="collapse-timing-report" class="sublinks report-items collapse">
+                                        <%general_report = JSON.parse(general_report)%>
+                                        <%for(var key in general_report){%>
+                                        <a class="list-group-item"><%=key%>: <%= general_report[key]%></a>
+                                        <%}%>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
 
-                        </div>
-                        <%if (error == ''){%>
-                            <div class="tab-pane" id="console">
+                    <script type="text/javascript">
+                        $('#collapse-gates-report').collapse('show');
+                    </script>
+
+
+
+                    <%if (error == ''){%>
+                    <div class="tab-pane" id="console">
                         <%}else{%>
-                            <div class="tab-pane active" id="console">
-                        <%}%>
+                        <div class="tab-pane active" id="console">
+                            <%}%>
                             <div>
                                 <%if (error == ''){%>
-                                    <% warningsArray = JSON.parse(warnings) %>
-                                    <%if (warningsArray.length == 0){%>
-                                        <p>No errors or warnings detected.</p>
-                                    <%}else{%>
-                                        <ul class="list-group">
-                                            <%warningsArray.forEach(function(warn){%>
-                                                <li class="list-group-item"><%=warn%></li>
-                                            <%})%>
-                                        </ul>
-                                    <%}%>
+                                <% warningsArray = JSON.parse(warnings) %>
+                                <%if (warningsArray.length == 0){%>
+                                <p>No errors or warnings detected.</p>
                                 <%}else{%>
-                                    <script type="text/javascript">
-                                        $("#cricuit-tab-li").remove();
-                                    </script>
-                                    <ul class="list-group">
-                                            <li class="list-group-item">Error: <%=error%></li>
-                                    </ul>
+                                <ul class="list-group">
+                                    <%warningsArray.forEach(function(warn){%>
+                                    <li class="list-group-item"><%=warn%></li>
+                                    <%})%>
+                                </ul>
+                                <%}%>
+                                <%}else{%>
+                                <script type="text/javascript">
+                                    $("#report-tabl-li").remove();
+                                </script>
+                                <ul class="list-group">
+                                    <li class="list-group-item">Error: <%=error%></li>
+                                </ul>
                                 <%}%>
                             </div>
                         </div>
+                        <div class="tab-pane" id="stdcells">
+                            <div id="stdcells-content">
+                                <% stdcells = JSON.parse(stdcells) %>
+                                <div id="stdcell-menu">
+                                     <strong>Standard Cells: </strong>
+                                    <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="expandStdcell();">Expand All</button> &nbsp; <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="collapseStdcell();">Collapse All</button>
+                                    <div class="panel list-group">
+                                        <% stdcells.forEach(function(cell){%>
+                                        <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-stdcell-<%=cell.name%>"><strong><%= cell.name%></strong></a>
+                                        <div id="collapse-stdcell-<%=cell.name%>" class="sublinks stdcells-items collapse">
+                                            <a class="list-group-item">Area: <%= cell.area%></a>
+                                            <a class="list-group-item">Cell Leakage Power: <%= cell.cell_leakage_power%></a>
+                                            <a class="list-group-item">Input pins: <%= cell.input_pins%></a>
+                                            <a class="list-group-item">Output pins: <%= cell.output_pins%></a>
+                                        </div>
+                                        <%})%>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="tab-pane" id="netlist">
-                           <div id="editor"><%-content%></div>
-
+                            <div id="parsed-cells">
+                                
+                                <div id="netlist-menu">
+                                <strong> Extracted Modules: </strong>
+                                    <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="expandNetlist();">Expand All</button> &nbsp; <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="collapseNetlist();">Collapse All</button>
+                                    <div class="panel list-group">
+                                        <% netlistCells = JSON.parse(netlist_cells) %>
+                                        <% netlistCells.forEach(function(cell){%>
+                                        <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-cell-<%=cell.name%>" data-parent="#netlist-menu"><strong><%= cell.name%></strong></a>
+                                        <div id="collapse-cell-<%=cell.name%>" class="sublinks netlist-items collapse">
+                                            <a class="list-group-item">Module: <%= cell.module%></a>
+                                            <a class="list-group-item">Number of Inputs: <%= cell.number_of_inputs%></a>
+                                            <a class="list-group-item">Number of Outputs: <%= cell.number_of_outputs%></a>
+                                            <a class="list-group-item">Size: <%= cell.size%></a>
+                                        </div>
+                                        <%})%>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="verilog-code-editor">
+                                <strong> Verilog Netlist: </strong>
+                                <div id="editor"><%-verilog_code%></div>
+                            </div>
                             <script src="/javascripts/ace/ace.js" type="text/javascript" charset="utf-8"></script>
                             <script src="/javascripts/ace/mode-verilog.js" type="text/javascript" charset="utf-8"></script>
-                             <script src="/javascripts/ace/theme-chrome.js" type="text/javascript" charset="utf-8"></script>
-
+                            <script src="/javascripts/ace/theme-chrome.js" type="text/javascript" charset="utf-8"></script>
                             <script>
                                 var editor = ace.edit("editor");
                                 editor.setTheme("ace/theme/chrome");
@@ -109,11 +195,10 @@
                                 editor.setReadOnly(true);
                                 editor.setFontSize(18);
                             </script>
-                            
                         </div>
                     </div>
-                </div>      
+                </div>
             </div>
-    </div> 
-</body>
+        </div>
+    </body>
 </html>

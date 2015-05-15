@@ -107,10 +107,23 @@ module.exports.cell = function(instanceName, libDef, libRef){
 			this.outputs[op]= [];
 			this.is_ff = def.is_ff;
 			this.is_latch = def.is_latch;
+
+			if(typeof def.is_input !== 'undefined')
+				this.is_input = def.is_input;
+			else
+				this.is_input = false;
+
+			if(typeof def.is_output !== 'undefined')
+				this.is_output = def.is_output;
+			else
+				this.is_output = false;
+			
 			if(!def.is_dummy){
 				this.area = def.area;
 				this.cell_leakage_power = def.cell_leakage_power;
-			}
+				this.is_dummy = false
+			}else
+				this.is_dummy = true;
 			for(var key in this.inputPorts){
 				this.inputs[this.inputPorts[key].name] = [];
 			}
