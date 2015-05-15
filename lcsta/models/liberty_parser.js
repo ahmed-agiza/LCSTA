@@ -64,6 +64,14 @@ function get2DTableRegex(){
 	return new RegExp('\\s*variable_1\\s*:\\s*([\\w\\.]+)\\s*;\\s*variable_2\\s*:\\s*([\\w\\.]+)\\s*;\\s*index_1\\s*\\(\\s*\\"([\\w\\"\\. ,\\(\\)\\+\\-\\*\\/!~\\d]+)\\s*\\"\\s*\\)\\s*;\\s*index_2\\s*\\(\\s*\\"([\\w\\"\\. ,\\(\\)\\+\\-\\*\\/!~\\d]+)\\s*\\"\\s*\\)\\s*;\\s*', 'm')
 }
 
+function getGateSizeRegex(){
+	return new RegExp('^\\s*(\\w+\\d+)(\\w)(\\d+)\\s*$');
+}
+
+function getGateSizeRegexNoX(){
+	return new RegExp('^\\s*(\\w+)(\\d+)\\s*$');
+}
+
 /****End Regular Expressions Generators****/
 
 var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
@@ -586,10 +594,33 @@ function extractCells(data, templates){
 	var cellScope = {};
 	while((cellScope = extractScope(data, 'cell')).found){
 		var cellDefinition = cellScope.content;
-		result.cells[cellScope.scopeParams] = parseCell(cellDefinition, templates);
-		result.cells[cellScope.scopeParams].name = cellScope.scopeParams;
+		var cellName = cellScope.scopeParams;
+		result.cells[cellName] = parseCell(cellDefinition, templates);
+		result.cells[cellName].name = cellName;
+		var gateSizeRegex = getGateSizeRegex();
+		var gateSizeRegexNoX = getGateSizeRegexNoX();
+
+		if(gateSizeRegex.test(cellName)){
+			var matchGroups = gateSizeRegex.exec(cellName);
+			var cellSize = parseInt(matchGroups[3]);
+			result.cells[cellName].basename = matchGroups[1];
+			result.cells[cellName].basenameX = matchGroups[1] + matchGroups[2];
+			result.cells[cellName].size = cellSize;
+		}else if (gateSizeRegexNoX.test(cellName)){
+			var matchGroups = gateSizeRegexNoX.exec(cellName);
+			var cellSize = parseInt(matchGroups[2]);
+			result.cells[cellName].basename = matchGroups[1];
+			result.cells[cellName].basenameX = matchGroups[1];
+			result.cells[cellName].size = cellSize;
+		}else{
+			result.cells[cellName].basename = cellName;
+			var cellSize = 1;
+			result.cells[cellName].size = cellSize;
+		}
+
 		data = cellScope.slicedData;
 	}
+
 	result.slicedData = data.trim();
 	return result;
 }
@@ -679,6 +710,27 @@ module.exports.parse = function(content, callback){
 	library.cells['output'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: false, is_input: false, is_output: true, is_vdd: false, is_gnd: false};
 	library.cells['vdd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: true, is_gnd: false};
 	library.cells['gnd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: false, is_gnd: true};
+	
+
+	library.sizing = {};
+
+	for(var key in library.cells){
+		var cellBaseName = library.cells[key].basenameX;
+		var cellSize = library.cells[key].size;
+		if(typeof library.sizing[cellBaseName] === 'undefined')
+			library.sizing[cellBaseName] = {};
+		library.sizing[cellBaseName][cellSize] = library.cells[key];
+	}
+
+	for(var key in library.cells){
+		var cellBaseName = library.cells[key].basenameX;
+		if(typeof library.cells[key].available_sizes === 'undefined')
+			library.cells[key].available_sizes = [];
+		for (var sizeKey in library.sizing[cellBaseName])
+			if(library.cells[key].available_sizes.indexOf(sizeKey) == -1)
+				library.cells[key].available_sizes.push(parseInt(sizeKey));
+	}
+
 	callback(null, library);
 }
 

@@ -41,13 +41,14 @@ var port = function(name, direction, capacitance, rise_capacitance, fall_capacit
 
 module.exports.port = port;
 
-module.exports.cell = function(instanceName, libDef){
+module.exports.cell = function(instanceName, libDef, libRef){
 	this.id = shortId.generate(); //Component ID.
 	this.inputs = {}; //Inputs objects.
 	this.outputs = {}; //Outputs objects.
 	this.is_ff = false; //Checking for sequential elements.
 	this.is_latch = false;
 	this.instanceName = instanceName;
+	
 
 	// -------------------------For STA--------------------------------
 	this.AAT = 0; // Actual Arrival Time
@@ -74,12 +75,23 @@ module.exports.cell = function(instanceName, libDef){
 	};
 	// ----------------------------------------------------------------
 
-	this.setDefinition = function(def){ //Setting liberty file cell definition.
+	this.setDefinition = function(def, ref){ //Setting liberty file cell definition.
+		this.libraryRef = ref; 
 		if(typeof(def) !== 'undefined'){
 			this.cellName = def.name;
+			this.size = def.size;
 			this.inputPorts = {};
 			this.outputPort = {};
 			this.unkownPorts = {};
+			this.available_sizes = def.available_sizes;
+
+			if(typeof ref !== 'undefined'){
+				this._alter_definitions = {};
+				for(var key in ref.sizing[def.basenameX]){
+					this._alter_definitions[key] = ref.sizing[def.basenameX][key];
+				}
+			}
+
 			for(var key in def.pins){
 				if (def.pins[key].direction == 'input'){
 					this.inputPorts[key] = def.pins[key];
@@ -106,16 +118,17 @@ module.exports.cell = function(instanceName, libDef){
 
 		}else
 			console.log('No definition for ' + instanceName);
-	}
+	};
 
-	this.setDefinition(libDef);
+	this.setDefinition(libDef, libRef);
 
 	this.getOutputs = function(){ //Getting output cells array.
 		if(typeof(this.outputPort) !== 'undefined'){
 			var op = Object.keys(this.outputPort)[0];
 			return this.outputs[op];
 		}
-	}
+	};
+
 	this.getInputs = function(){ //Getting input cells array.
 		if(typeof(this.inputPorts) !== 'undefined'){
 			var retInputs = [];
@@ -124,15 +137,187 @@ module.exports.cell = function(instanceName, libDef){
 			return retInputs;
 		}
 				
-	}
+	};
 
 
 	this.isFF = function(){ //Checking for sequential elements.
 		return this.is_ff;
-	}
+	};
+
 	this.isLatch = function(){ //Checking for sequential elements.
 		return this.is_latch;
+	};
+
+	this.resizeTo = function(value){
+		if(value <= 0)
+			throw "Invalid size " + value;
+		if(typeof this._alter_definitions[value] == 'undefined'){
+			console.log('Size %d is not available', value);
+			return 0;
+		}else{
+			console.log('Resizing %s to %d', this.instanceName, value);
+			this.size = parseInt(value);
+			var newCellDef = this._alter_definitions[value];
+			this.cellName = newCellDef.name;
+			for(var key in newCellDef.pins){
+				if (newCellDef.pins[key].direction == 'input'){
+					this.inputPorts[key] = newCellDef.pins[key];
+				}else if (newCellDef.pins[key].direction == 'output'){
+					this.outputPort[key] = newCellDef.pins[key];
+				}else{
+					this.unkownPorts[key] = newCellDef.pins[key];
+				}
+			}
+			return value;
+		}
 	}
+
+	this.getMinimumSize = function (){
+		var min = 9999;
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size < min)
+				min = size;
+		}
+		return min;
+	}
+
+	this.getMaximumSize = function(){
+		var max = -1;
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size > max)
+				max = size;
+		}
+		return max;
+	}
+
+
+
+	this.resizeBelow = function(value){
+		if(value <= 0)
+			throw "Invalid size " + value;
+		var newSize = this.getMinimumSize();
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size > newSize && size < value)
+				newSize = size;
+		}
+		return this.resizeTo(newSize);
+
+	};
+
+	this.resizeAbove = function(value){
+		if(value <= 0)
+			throw "Invalid size " + value;
+		var newSize = this.getMaximumSize();
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size < newSize && size > value)
+				newSize = size;
+		}
+		return this.resizeTo(newSize);
+
+	};
+
+	this.resizeBelowInclusive = function(value){
+		if(value <= 0)
+			throw "Invalid size " + value;
+		var newSize = this.getMinimumSize();
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size > newSize && size <= value)
+				newSize = size;
+		}
+		return this.resizeTo(newSize);
+	};
+
+	this.resizeAboveInclusive = function(value){
+		if(value <= 0)
+			throw "Invalid size " + value;
+		var newSize = this.getMaximumSize();
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size < newSize && size >= value)
+				newSize = size;
+		}
+		return this.resizeTo(newSize);
+	};
+
+	this.resizeBetweenMinimum = function(min, max){
+
+		if(min <= 0)
+			throw "Invalid size " + min;
+		if(max <= 0)
+			throw "Invalid size " + max;
+
+		var newSize = 9999;
+
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size < max && size > min && size < newSize)
+				newSize = size;
+		}
+
+		return this.resizeTo(newSize);
+	};
+
+	this.resizeBetweenMinimumInclusive = function(min, max){
+
+		if(min <= 0)
+			throw "Invalid size " + min;
+		if(max <= 0)
+			throw "Invalid size " + max;
+
+
+		var newSize = 9999;
+
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size <= max && size >= min && size < newSize)
+				newSize = size;
+		}
+
+		return this.resizeTo(newSize);
+	};
+
+	this.resizeBetweenMaximum = function(min, max){
+		
+		if(min <= 0)
+			throw "Invalid size " + min;
+		if(max <= 0)
+			throw "Invalid size " + max;
+
+		var newSize = -1;
+
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size < max && size > min && size > newSize)
+				newSize = size;
+		}
+
+		return this.resizeTo(newSize);
+	};
+
+	this.resizeBetweenMaximumInclusive = function(min, max){
+
+		if(min <= 0)
+			throw "Invalid size " + min;
+		if(max <= 0)
+			throw "Invalid size " + max;
+
+		var newSize = -1;
+
+		for(var key in this._alter_definitions){
+			var size = parseInt(key);
+			if(size <= max && size >= min && size > newSize)
+				newSize = size;
+		}
+
+		return this.resizeTo(newSize);
+	};
+
+	
 
 };
 

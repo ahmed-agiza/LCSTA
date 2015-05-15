@@ -71,8 +71,8 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	var moduleCount = (data.match(moduleKeywordRegex) || []).length; //Counting the occurences of 'module'.
 	var warnings = [];
 	var busBases = {};
-	var cells = {'vdd': new Cell('vdd', stdcells.cells['vdd']),
-				 'gnd': new Cell('gnd', stdcells.cells['gnd'])};
+	var cells = {'vdd': new Cell('vdd', stdcells.cells['vdd'], stdcells),
+				 'gnd': new Cell('gnd', stdcells.cells['gnd'], stdcells)};
 	cells['vdd'].model = 'vdd';
 	cells['gnd'].model = 'gnd';
 	var wires = {'vdd_wire': {name: 'vdd_wire', direction: 'input', input: {port: 'Y', gate: cells.vdd}, outputs: [], type: 'dummy_wire', net_capacitance: 0},
@@ -141,10 +141,10 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			};
 
 			if (wireDirection == 'input'){
-				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input);
+				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
 				wires[wireName].input = {port: 'Y', gate: cells['___input_' + wireName]};
 			}else if (wireDirection == 'output'){
-				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output);
+				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
 				wires[wireName].outputs.push({port: 'Y', gate: cells['___output_' + wireName]});
 			}
 
@@ -195,10 +195,10 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				};
 
 				if (wireDirection == 'input'){
-					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input);
+					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
 					wires[wireName].input = {port: 'A', gate: cells['___input_' + wireName]};
 				}else if (wireDirection == 'output'){
-					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output);
+					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
 					wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 				}
 			}
@@ -208,7 +208,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			var cellDef = stdcells.cells[cellDefName];
 			var cellName = matchedGroups[2].trim();
 			var rawParams = matchedGroups[3].trim();
-			cells[cellName] = new Cell(cellName, cellDef);
+			cells[cellName] = new Cell(cellName, cellDef, stdcells);
 			cells[cellName].model = cellDefName;
 			var paramsList = rawParams.split(',');
 			for(var i = 0; i < paramsList.length; i++){
