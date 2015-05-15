@@ -113,3 +113,35 @@ function topological_sorting(){
 		}
 	}
 }
+
+var forwardTraversal = function(){ // Evaluate input slew rates, capacitance loads, output slew rates, gate delays, and AAT using BFS
+		var calculated_capacitance = new Array(this.gates.length); // Capacitance previously evaluated
+		var queue = new Array(); // BFS queue
+		int current;
+		var child_index;
+		var child;
+		for(var i=0; i<calculated_capacitance.length; i++){ // Initialize to false
+			calculated_capacitance[i] = false;
+		}
+
+		this.level[0] = 0;
+		queue.push(0); // Push origin
+		while(queue.length > 0){
+			current = queue.shift();
+			for(var i=0; i<this.timing_graph[current].length; i++){
+				child_index = this.timing_graph[current][i].gate;
+				child = this.gates[child_index];
+				queue.push(child_index);
+				if(current == 0){ // Origin
+					if(child.getInputs.length == 0) // Input pin
+						initializeInputPort(child);
+					else if(child.isFF) // FF
+						initializeFF(child, child_index);
+				}
+				else {
+					// Evaluate the capacitance load
+					if(!calculated_capacitance[child_index])
+				}
+			}
+		}
+	};

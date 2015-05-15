@@ -5,6 +5,7 @@ var STA = function(gates, constraints){ // Constructor
 	this.gates.unshift("Origin"); // Dummy node
 	this.constraints = constraints; // Constraints
 	this.timing_graph = new Array(this.gates.length); // Structure to store the timing graph
+	this.forward_ordering = new Array(); // Topological order of the nodes for foward traversal
 	this.levels = new Array(); // Starting nodes
 
 	// Constraints data
@@ -15,6 +16,14 @@ var STA = function(gates, constraints){ // Constructor
 	this.clock = constraints.clock; // Constraint clock
 	this.clock_node; // The cell modelling the clock
 
+	// Initialize the timing graph
+	for(var i=0; i<this.timing_graph.length; i++){
+		this.timing_graph[i] = {
+			children: [],
+			parents: []
+		};
+	}
+
 	fetchAndSetupClockNode(); // Locate clock node
 
 	// Constructing the timing graph
@@ -22,10 +31,13 @@ var STA = function(gates, constraints){ // Constructor
 		if(this.gates[i].getInputs.length == 0 || this.gates[i].isFF){ // Starting point of a timing path: Input pin / FF
 			this.starting_nodes.push(i); // Set of starting nodes (CHECK IF NEEDED)
 			if(!this.gates[i].isClock){
-				this.timing_graph[0].push({ // Origin points at the starting nodes of the timing path
+
+				this.timing_graph[0].children.push({ // Origin points to child
 					port: "Dummy",
 					gate: i
 				});
+				this.timing_graph[i].parents.push(0); // Point to parent Origin
+
 				buildTimingPath(this.gates[i], i);
 			}
 		}
@@ -33,7 +45,42 @@ var STA = function(gates, constraints){ // Constructor
 	// Timing path constructed
 
 	this.arrivalTimeCalculation = function(){ // Calculating arrival time
+		topologicalSorting(); // Sorting the graph for analysis
 
+		var calculated_capacitance = new Array(this.gates.length); 
+		var current;
+		var current_index;
+		var child_index;
+		var child;
+		var input_port;
+		for(var i=0; i<calculated_capacitance.length; i++){
+			calculated_capacitance[i] = false;
+		}
+
+		for(var i=0; i<this.forward_ordering.length; i++){
+			current_index = this.forward_ordering[i];
+			current = this.gates[current_index];
+			for(var j=0; j<this.timing_graph[current_index].children.length; j++){
+				child_index = this.timing_graph[current_index].children[j].gate;
+				child = this.gates[child_index];
+				input_port = this.timing_graph[current_index].children[j].port;
+				if(current_index == 0){ // Origin
+					if(child.getInputs.length == 0) // Input pin
+						initializeInputPort(child);
+					else if(child.isFF) // FF
+						initializeFF(child, child_index);
+				}
+				else{
+					// Calculate the capacitance load of the child
+					if(!calculated_capacitance[child_index]){ // If not previously computed
+						evaluateCapacitanceLoad(child, child_index);
+						calculated_capacitance[child_index] = true;
+					}
+
+					updateValues(parent, child, input_port); // Update the values for the child node
+				}
+			}
+		}
 	};
 
 	this.requiredTimeCalculation = function(){
@@ -87,10 +134,12 @@ var STA = function(gates, constraints){ // Constructor
 		var child_index;
 		for(var i=0; i<children.length; i++){
 			child_index = this.gates.indexOf(children[i]);
-			this.timing_graph[current_index].push({
+
+			this.timing_graph[current_index].children.push({ // Point to child
 				port: getInputPort(current, children[i]),
 				gate: child_index
 			});
+			this.timing_graph[child_index].parents.push(current_index); // Point to parent
 		}
 		if(!children[i].getOutputs.length == 0 || children[i].isFF){ // Not an end of a timing path
 			buildTimingPath(children[i], child_index);
@@ -103,33 +152,24 @@ var STA = function(gates, constraints){ // Constructor
 				return child.inputPorts[key];
 	};
 
-	var forwardTraversal = function(){ // Evaluate input slew rates, capacitance loads, output slew rates, gate delays, and AAT using BFS
-		var calculated_capacitance = new Array(this.gates.length); // Capacitance previously evaluated
-		var queue = new Array(); // BFS queue
-		int current;
+	var topologicalSorting = function(){ // Topologically sort the nodes for analysis
+		var temp_timing_graph = clone(this.timing_graph); // Clone the graph as it will be modified during the process
+		var starting = new Array();
+		var current;
 		var child_index;
-		var child;
-		for(var i=0; i<calculated_capacitance.length; i++){ // Initialize to false
-			calculated_capacitance[i] = false;
-		}
+		var element_index;
+		starting.push(0); // Push the Origin node
+		while(starting.length > 0){
+			current = starting[0];
+			starting.splice(0,1); // remove the first element
+			this.forward_ordering.push(current);
+			for(var i=0; i<temp_timing_graph[current].children.length; i++){ // Go over children
+				child_index = temp_timing_graph[current].children[i].gate;
+				element_index = temp_timing_graph[child_index].parents.indexOf(current); // Find the edge from child to parent
+				temp_timing_graph[child_index].parents.splice(element_index, 1); // Remove the edge
 
-		this.level[0] = 0;
-		queue.push(0); // Push origin
-		while(queue.length > 0){
-			current = queue.shift();
-			for(var i=0; i<this.timing_graph[current].length; i++){
-				child_index = this.timing_graph[current][i].gate;
-				child = this.gates[child_index];
-				queue.push(child_index);
-				if(current == 0){ // Origin
-					if(child.getInputs.length == 0) // Input pin
-						initializeInputPort(child);
-					else if(node.isFF) // FF
-						initializeFF(child, child_index);
-				}
-				else {
-
-				}
+				if(temp_timing_graph[child_index].parents.length == 0) // No more incoming edges
+					starting.push(child_index);
 			}
 		}
 	};
@@ -188,8 +228,8 @@ var STA = function(gates, constraints){ // Constructor
 		var child;
 		var child_index;
 		for(var key in node.outputPorts){ // One output port for simple gates
-			for(var i=0; i<this.timing_graph[node_index].length; i++){
-				child_index = this.timing_graph[node_index][i].gate;
+			for(var i=0; i<this.timing_graph[node_index].children.length; i++){
+				child_index = this.timing_graph[node_index].children[i].gate;
 				child = this.gates[child_index];
 
 				// Add the net capacitance to both the minimum and the maximum
@@ -205,6 +245,76 @@ var STA = function(gates, constraints){ // Constructor
 	};
 
 	var updateValues = function(parent, child, input_port){ // Check and update the input and output slew rates, gate delays, and AAT
+		var output_port;
+		var timing_tables;
 
+		var cell_rise_max, cell_fall_max, gate_delay_max;
+		var rise_transition_max, fall_transition_max;
+
+		var cell_rise_min, cell_fall_min;
+		var rise_transition_min, fall_transition_min;
+		for(var key in child.outputPorts){ // Most cases there is only one output port
+			output_port = child.outputPorts[key];
+
+			// Got maximum gate delay using this input slew rate
+			cell_rise_max = timing_tables.cell_rise.getData(parent.output_slew.max, child.capacitance_load.max);
+			cell_fall_max = timing_tables.cell_fall.getData(parent.output_slew.max, child.capacitance_load.max);
+			gate_delay_max = max(cell_rise_max, cell_fall_max); 
+
+			child.AAT = max(child.AAT, parent.AAT + gate_delay_max); // Update AAT
+
+			if(parent.output_slew.max > child.input_slew.max){ // If the maximum input slew rate is a new maximum
+				child.input_slew.max = parent.output_slew.max; // Update maximum input slew rate
+				timing_tables = output_port[input_port.name].timing;
+
+				// Update maximum output slew rate
+				rise_transition_max = timing_tables.rise_transition.getData(child.input_slew.max, child.capacitance_load.max);
+				fall_transition_max = timing_tables.fall_transition.getData(child.input_slew.max, child.capacitance_load.max);
+				child.output_slew.max = max(rise_transition_max, fall_transition_max);
+
+				child.gate_delay.max = gate_delay_max; // Update maximum gate delay
+			}
+
+			if(parent.output_slew.min < child.input_slew.min){	// If the minimum input slew rate is a new minimum
+				child.input_slew.min = parent.output_slew.min; // Update minimum input slew rate
+
+				// Update miniumum output slew rate
+				rise_transition_min = timing_tables.rise_transition.getData(child.input_slew.min, child.capacitance_load.min);
+				fall_transition_min = timing_tables.fall_transition.getData(child.input_slew.min, child.capacitance_load.min);
+				child.output_slew.min = min(rise_transition_min, fall_transition_min);
+
+				// Update minimum gate delay
+				cell_rise_min = timing_tables.cell_rise.getData(child.output_slew.min, child.capacitance_load.min);
+				cell_fall_min = timing_tables.cell_fall.getData(child.output_slew.min, child.capacitance_load.min);
+			}
+		}
+	};
+
+	var clone = function(obj){
+	    var copy;
+	    if(null == obj || "object" != typeof obj) return obj; // Handle the 3 simple types, and null or undefined
+
+	    if(obj instanceof Date){ // Handle Date
+	        copy = new Date();
+	        copy.setTime(obj.getTime());
+	        return copy;
+	    }
+	    
+	    if(obj instanceof Array){ // Handle Array
+	        copy = [];
+	        for(var i=0, len=obj.length; i<len; i++){
+	            copy[i] = clone(obj[i]);
+	        }
+	        return copy;
+	    }
+	    
+	    if(obj instanceof Object){ // Handle Object
+	        copy = {};
+	        for(var attr in obj){
+	            if(obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+	        }
+	        return copy;
+	    }
+	    throw new Error("Unable to copy obj! Its type isn't supported.");
 	};
 };
