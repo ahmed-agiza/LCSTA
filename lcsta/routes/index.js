@@ -17,6 +17,7 @@ var Connect = require('../models/cell').connect;
 var TemplateCell = require('../models/cell').templateCell;
 var STA = require('../models/static_timing_analysis');
 
+
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
     for (key in obj) {
@@ -115,6 +116,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(constrPath);
 						return;
 		    		}else{
+		    			var tbl = stdcells.cells['AND2X1'].pins['Y'].timing['A'].cell_rise;
 		    			fs.readFile(capPath, 'utf8', function(err, capData){
 		    				if(err){
 				    			console.log(err);

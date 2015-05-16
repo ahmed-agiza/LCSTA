@@ -4,7 +4,7 @@ var Cell = require('./cell').cell;
 var Connect = require('./cell').connect;
 var TemplateCell = require('./cell').templateCell;
 
-var TPS = require('../node_modules/thinplate/thinplate');
+var TPS = require('./thinplate/thinplate');
 
 
 /****Regular Expressions Generators****/
@@ -160,7 +160,7 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 				}
 			}
 		}
-		this.getData = function(row, column, cb){
+		this.getData = function(row, column){
 
 			if(typeof(row) === 'string')
 				row = parseFloat(row);
@@ -170,21 +170,10 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 
 			var tps = new TPS();
 
-			tps.compile(this.points, this.targets, function(err){
-			    if(err){
-			      console.log(err);
-			      cb(err, null);
-			    }
-			    var targetPoint = [row, column];
-			    tps.getValues([targetPoint], function(err, result){
-			        if(err) {
-			          console.log(err);
-			          cb(err, null);
-			        }
+			tps.compile(this.points, this.targets);
 
-			        return cb(null, result.ys[0]);
-			    });
-			});
+			var targetPoint = [row, column];
+			return tps.getValues([targetPoint]);
 		};
 
 	}else{
@@ -209,30 +198,18 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 			}
 		}
 
-		this.getData = function(column, cb){
+		this.getData = function(column){
 
 			if (typeof(column) === 'string')
 				column = parseFloat(column);
 
 			var tps = new TPS();
 
-			tps.compile(this.points, this.targets, function(err){
-			    if(err){
-			      console.log(err);
-			      cb(err, null);
-			    }
+			tps.compile(this.points, this.targets);
 
-			    var targetPoint = [column];
+			var targetPoint = [column];
 
-			    tps.getValues([targetPoint], function(err, result){
-			        if(err) {
-			          console.log(err);
-			          cb(err, null);
-			        }
-
-			        return cb(null, result.ys[0]);
-			    });
-			});
+			return tps.getValues([targetPoint]);
 		}
 
 	}
