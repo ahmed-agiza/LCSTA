@@ -15,6 +15,7 @@ var ConstraintsParser = require('../models/timing_constraints_parser');
 var Cell = require('../models/cell').cell;
 var Connect = require('../models/cell').connect;
 var TemplateCell = require('../models/cell').templateCell;
+var STA = require('../models/static_timing_analysis');
 
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
@@ -210,6 +211,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 																				        fs.unlink(constrPath);
 		       																			return;								
 														        					}else{
+														        						var StaticTimingAnalyser = new STA(cells, constr);
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!
