@@ -4,9 +4,15 @@ var Cell = require('./cell');
 
 var STA = function(gates, constraints){ // Constructor
 	this.arrivalTimeCalculation = function(){ // Calculating arrival time
-		this._topologicalSorting(); // Sorting the graph for analysis
+		this._topologicalSorting(true); // Sorting the graph for AAT calculations
 
-		/*var calculated_capacitance = new Array(this.gates.length); 
+		// Log the topologically sorted data
+		for(var i=0; i<this.forward_ordering.length; i++){
+			console.log(i + " " + this.gates[this.forward_ordering[i]].instanceName);
+		}
+		console.log("-----------------------------------------------");
+
+		var calculated_capacitance = new Array(this.gates.length); 
 		var current;
 		var current_index;
 		var child_index;
@@ -27,6 +33,7 @@ var STA = function(gates, constraints){ // Constructor
 					if(child.is_input) // Input pin
 						this._initializeInputPort(child);
 					else if(child.isFF()) // FF
+						console.log("FF");
 						this._initializeFF(child, child_index);
 				}
 				else{
@@ -36,18 +43,32 @@ var STA = function(gates, constraints){ // Constructor
 						calculated_capacitance[child_index] = true;
 					}
 
-					this._updateValues(parent, child, input_port); // Update the values for the child node
+					this._updateValues(current, child, input_port); // Update the values for the child node
 				}
 			}
-		}*/
+		}
+
+		// Log the arrival time data
+		for(var i=1; i<this.forward_ordering.length; i++){
+			console.log(i + " " + this.gates[this.forward_ordering[i]].instanceName);
+			console.log("Input Slew " + this.gates[this.forward_ordering[i]].input_slew.max + ", " + this.gates[this.forward_ordering[i]].input_slew.min);
+			console.log("Output Slew " + this.gates[this.forward_ordering[i]].output_slew.max + ", " + this.gates[this.forward_ordering[i]].output_slew.min);
+			console.log("Capacitance Load " + this.gates[this.forward_ordering[i]].capacitance_load.max + ", " + this.gates[this.forward_ordering[i]].capacitance_load.min);
+			console.log("Gate Delay " + this.gates[this.forward_ordering[i]].gate_delay.max + ", " + this.gates[this.forward_ordering[i]].gate_delay.min);
+			console.log("AAT " + this.gates[this.forward_ordering[i]].AAT);
+			console.log("------------------");
+		}
+		console.log("-----------------------------------------------");
 	};
 
 	this.requiredTimeCalculation = function(){
-
+		this._topologicalSorting(false); // Sorting the graph for RAT calculations
 	};
 
 	this.calculateSlack = function(){
-
+		for(var i=1; i<this.gates.length; i++){
+			this.gates[i].slack = this.gates[i].RAT - this.gates[i].AAT; // Slack evaluation for each node
+		}
 	};
 
 	this.generateTimingReport = function(){
@@ -114,24 +135,52 @@ var STA = function(gates, constraints){ // Constructor
 				return child.inputPorts[key];
 	};
 
-	this._topologicalSorting = function(){ // Topologically sort the nodes for analysis
+	this._topologicalSorting = function(forward){ // Topologically sort the nodes for analysis
 		var temp_timing_graph = this._clone(this.timing_graph); // Clone the graph as it will be modified during the process
 		var starting = new Array();
 		var current;
 		var child_index;
 		var element_index;
-		starting.push(0); // Push the Origin node
-		while(starting.length > 0){
-			current = starting[0];
-			starting.splice(0,1); // remove the first element
-			this.forward_ordering.push(current);
-			for(var i=0; i<temp_timing_graph[current].children.length; i++){ // Go over children
-				child_index = temp_timing_graph[current].children[i].gate;
-				element_index = temp_timing_graph[child_index].parents.indexOf(current); // Find the edge from child to parent
-				temp_timing_graph[child_index].parents.splice(element_index, 1); // Remove the edge
 
-				if(temp_timing_graph[child_index].parents.length == 0) // No more incoming edges
-					starting.push(child_index);
+		if(forward){ // Topological sorting for the forward traversal
+			starting.push(0); // Push the Origin node
+			while(starting.length > 0){
+				current = starting[0];
+				starting.splice(0,1); // remove the first element
+				this.forward_ordering.push(current);
+				for(var i=0; i<temp_timing_graph[current].children.length; i++){ // Go over children
+					child_index = temp_timing_graph[current].children[i].gate;
+					element_index = temp_timing_graph[child_index].parents.indexOf(current); // Find the edge from child to parent
+					temp_timing_graph[child_index].parents.splice(element_index, 1); // Remove the edge
+
+					if(temp_timing_graph[child_index].parents.length == 0) // No more incoming edges
+						starting.push(child_index);
+				}
+			}
+		}
+		else{ // Topological sorting for the reverse traversal
+			for(var i=1; i<this.gates.length; i++){
+				if(this.gates[i].is_output || this.gates[i].isFF()){ // If it is an ending node
+					starting.push(i);
+				}
+			}
+			while(starting.length > 0){
+				current = starting[0];
+				starting.splice(0, 1); // remove the first element
+				this.backward_ordering.push(current);
+				for(var i=0; i<temp_timing_graph[current].parents.length; i++){ // Go over parents
+					child_index = temp_timing_graph[current].parents[i];
+					for(var j=0; j<temp_timing_graph[child_index].children.length; j++){ // Find the edge from parent to child
+						if(temp_timing_graph[child_index].children[j].gate == current){
+							element_index = j;
+							break;
+						}
+					}
+					temp_timing_graph[child_index].children.splice(element_index, 1); // Remove the edge
+
+					if(temp_timing_graph[child_index].children.length == 0) // No more incoming edges
+						starting.push(child_index);
+				}
 			}
 		}
 	};
@@ -189,14 +238,15 @@ var STA = function(gates, constraints){ // Constructor
 	this._evaluateCapacitanceLoad = function(node, node_index){ // Calculate the capacitance load for a cell
 		var child;
 		var child_index;
-		for(var key in node.outputPorts){ // One output port for simple gates
+		for(var key in node.outputPort){ // One output port for simple gates
 			for(var i=0; i<this.timing_graph[node_index].children.length; i++){
 				child_index = this.timing_graph[node_index].children[i].gate;
 				child = this.gates[child_index];
 
 				// Add the net capacitance to both the minimum and the maximum
-				node.capacitance_load.max += node.outputPorts[key].net_capacitance[child.instanceName][child.port];
-				node.capacitance_load.min += node.outputPorts[key].net_capacitance[child.instanceName][child.port];
+				console.log(node.outputPort[key]);
+				node.capacitance_load.max += node.outputPort[key].net_capacitance[child.instanceName][child.port];
+				node.capacitance_load.min += node.outputPort[key].net_capacitance[child.instanceName][child.port];
 
 				// Add the maximum and minimum capacitance as a result of the child port
 				node.capacitance_load.max += Math.max(child.port.rise_capacitance, child.port.fall_capacitance);
@@ -215,8 +265,8 @@ var STA = function(gates, constraints){ // Constructor
 
 		var cell_rise_min, cell_fall_min;
 		var rise_transition_min, fall_transition_min;
-		for(var key in child.outputPorts){ // Most cases there is only one output port
-			output_port = child.outputPorts[key];
+		for(var key in child.outputPort){ // Most cases there is only one output port
+			output_port = child.outputPort[key];
 
 			// Got maximum gate delay using this input slew rate
 			cell_rise_max = timing_tables.cell_rise.getData(parent.output_slew.max, child.capacitance_load.max);
@@ -287,14 +337,12 @@ var STA = function(gates, constraints){ // Constructor
 			this.gates.push(gates[key]);
 		}
 	}
-	// TEMP FIX!
-	//this.gates.splice(1, 2);
-	//
+
 	this.constraints = constraints; // Constraints
 	this.timing_graph = new Array(this.gates.length); // Structure to store the timing graph
 	this.visited = new Array(this.gates.length); // Used for building the graph
 	this.forward_ordering = new Array(); // Topological order of the nodes for foward traversal
-	this.levels = new Array(); // Starting nodes
+	this.backward_ordering = new Array(); // Topological order of the nodes for backward traversal
 
 	// Constraints data
 	this.input_delays = constraints.input_delays; // Constraint input delays (cell rise and cell fall)
@@ -314,6 +362,9 @@ var STA = function(gates, constraints){ // Constructor
 	}
 
 	this._fetchAndSetupClockNode(); // Locate clock node
+	// Log the clock node
+	console.log(this.clock_node);
+	console.log("-----------------------------------------------");
 
 	// Constructing the timing graph
 	for(var i=1; i<this.gates.length; i++){
@@ -332,10 +383,15 @@ var STA = function(gates, constraints){ // Constructor
 	}
 	// Timing path constructed
 
+	// Log the constraints
+	console.log(constraints);
+	console.log("-----------------------------------------------");
+
 	// Log the gates
 	for(var i=1; i<this.gates.length; i++){
 		console.log(this.gates[i].instanceName + " " + this.gates[i].getInputs().length + " " + this.gates[i].getOutputs().length);
 	}
+	console.log("-----------------------------------------------");
 
 	// Log the timing graph
 	for(var i=0; i<this.timing_graph.length; i++){
@@ -350,6 +406,7 @@ var STA = function(gates, constraints){ // Constructor
 		}
 		console.log("-------------");
 	}
+	console.log("-----------------------------------------------");
 };
 
 module.exports = STA;
