@@ -15,7 +15,6 @@ var ConstraintsParser = require('../models/timing_constraints_parser');
 var Cell = require('../models/cell').cell;
 var Connect = require('../models/cell').connect;
 var TemplateCell = require('../models/cell').templateCell;
-var TPS = require('../models/thinplate/thinplate');
 
 
 function countArray(obj){ //Key-value array size counter.
@@ -36,50 +35,6 @@ function getKey(object, value){
 }
 
 router.get('/', function(req, res){ //File upload view.
-	var tps = new TPS();
-
-	var fitpoints = [ [0,1], [1,1], [2,5], [3,4] ];
-
-	// we'll set the target to the be y value of each point
-	// this will generate a curve that goes through our fitpoints
-	var targets = fitpoints.map(function(curr){
-	    return curr[curr.length-1];
-	});
-
-	//compile requires fitpoint, target and a callback
-	// callback returns error if there is one
-	  tps.compile(fitpoints, targets);
-
-	  //now that it compiled we can use it.
-	    
-	  //fill out some random points to interpolate
-	  // (interpolation happens within the fitpoint boundaries)
-	  var pnts = [];
-	  for(var i = 0 ; i < 20; i++){
-	    pnts.push([Math.random() * 5, Math.random() * 5]);
-	  }
-	    
-	    
-	  //have the tps solve for the values!
-	  var result = tps.getValues(pnts);
-	     console.log('interpolants!')
-	     console.dir(result.ys);
-	  
-	      
-	  //fill out some random points to extrapolate
-	  // (extrapolation happens outside the fitpoint boundaries)
-	  var pnts = [];
-	  for(var i = 0 ; i < 20; i++){
-	    pnts.push([5 + Math.random() * 5,  5 + Math.random() * 5]);
-	  }
-	    
-	    
-	    //have the tps solve for the values!
-	   result = tps.getValues(pnts);
-	
-	   console.log('extrapolants!')
-	   console.dir(result.ys);
-	  
 	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});
 });
 
