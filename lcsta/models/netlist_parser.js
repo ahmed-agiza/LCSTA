@@ -249,12 +249,14 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	
 	/****Connecting Extracted Gates****/
 	for(var key in wires){
-		if(wires[key] != undefined)
+		if(wires[key] != undefined && wires[key].type !== 'dummy_wire')
 			for(var i = 0; i < wires[key].outputs.length; i++){
 				if(Object.keys(wires[key].input).length === 0 || typeof(wires[key].outputs[i]) === undefined || Object.keys(wires[key].outputs[i]).length === 0){
 					console.log('Flying wire ' + key);
 					warnings.push('Flying wire ' + key);
 				}else{
+					if(wires[key].input.gate == cells['vdd'] || wires[key].outputs[i].gate == cells['gnd'])
+						console.log(wires[key]);
 					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port, wires[key].net_capacitance);
 				}
 			}
@@ -268,6 +270,9 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				cells[key].clock_skew = 0;
 		}	
 	}
+
+	delete cells.vdd;
+	delete cells.gnd;
 	
 
 	callback(null, cells, wires);
