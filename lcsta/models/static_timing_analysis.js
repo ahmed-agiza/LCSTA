@@ -24,7 +24,7 @@ var STA = function(gates, constraints){ // Constructor
 				child = this.gates[child_index];
 				input_port = this.timing_graph[current_index].children[j].port;
 				if(current_index == 0){ // Origin
-					if(child.getInputs().length == 0) // Input pin
+					if(child.is_input) // Input pin
 						this._initializeInputPort(child);
 					else if(child.isFF()) // FF
 						this._initializeFF(child, child_index);
@@ -91,6 +91,7 @@ var STA = function(gates, constraints){ // Constructor
 	this._buildTimingPath = function(current, current_index){ // Building timing graph using DFS
 		var children = current.getOutputs();
 		var child_index;
+		this.visited[current_index] = true; // Mark the node as visited
 		for(var i=0; i<children.length; i++){
 			child_index = this.gates.indexOf(children[i]);
 
@@ -100,8 +101,9 @@ var STA = function(gates, constraints){ // Constructor
 			});
 			this.timing_graph[child_index].parents.push(current_index); // Point to parent
 
-			if(!children[i].getOutputs().length == 0 || children[i].isFF()){ // Not an end of a timing path
-				this._buildTimingPath(children[i], child_index);
+			if(!(children[i].is_output || children[i].isFF())){ // Not an end of a timing path
+				if(!this.visited[child_index]) // If the node wasn't visited previously
+					this._buildTimingPath(children[i], child_index);
 			}
 		}
 	};
@@ -290,6 +292,7 @@ var STA = function(gates, constraints){ // Constructor
 	//
 	this.constraints = constraints; // Constraints
 	this.timing_graph = new Array(this.gates.length); // Structure to store the timing graph
+	this.visited = new Array(this.gates.length); // Used for building the graph
 	this.forward_ordering = new Array(); // Topological order of the nodes for foward traversal
 	this.levels = new Array(); // Starting nodes
 
@@ -307,13 +310,14 @@ var STA = function(gates, constraints){ // Constructor
 			children: [],
 			parents: []
 		};
+		this.visited[i] = false;
 	}
 
 	this._fetchAndSetupClockNode(); // Locate clock node
 
 	// Constructing the timing graph
 	for(var i=1; i<this.gates.length; i++){
-		if(this.gates[i].getInputs().length == 0 || this.gates[i].isFF()){ // Starting point of a timing path: Input pin / FF
+		if(this.gates[i].is_input || this.gates[i].isFF()){ // Starting point of a timing path: Input pin / FF
 			if(!this.gates[i].isClock){
 				this.timing_graph[0].children.push({ // Origin points to child
 					port: "Dummy",
@@ -322,6 +326,7 @@ var STA = function(gates, constraints){ // Constructor
 				this.timing_graph[i].parents.push(0); // Point to parent Origin
 
 				this._buildTimingPath(this.gates[i], i);
+				this.visited[0] = true;
 			}
 		}
 	}
@@ -332,7 +337,7 @@ var STA = function(gates, constraints){ // Constructor
 	}
 
 	for(var i=0; i<this.timing_graph.length; i++){
-		console.log(i);
+		console.log(i + " " + (i == 0 ? "Origin" : this.gates[i].instanceName));
 		console.log("Children:");
 		for(var j=0; j<this.timing_graph[i].children.length; j++){
 			console.log(this.timing_graph[i].children[j].gate + " " + this.gates[this.timing_graph[i].children[j].gate].instanceName + " " + (i==0 ? "Dummy" : this.timing_graph[i].children[j].port.name));
@@ -341,6 +346,7 @@ var STA = function(gates, constraints){ // Constructor
 		for(var j=0; j<this.timing_graph[i].parents.length; j++){
 			console.log(this.timing_graph[i].parents[j]);
 		}
+		console.log("-------------");
 	}
 };
 
