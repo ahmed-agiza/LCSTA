@@ -145,7 +145,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				wires[wireName].input = {port: 'Y', gate: cells['___input_' + wireName]};
 			}else if (wireDirection == 'output'){
 				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
-				wires[wireName].outputs.push({port: 'Y', gate: cells['___output_' + wireName]});
+				wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 			}
 
 		}

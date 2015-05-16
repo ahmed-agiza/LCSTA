@@ -328,7 +328,7 @@ module.exports.connect = function(source, target, portName, netCap){
 			console.log('Connection already exists.');
 		}
 	}else
-		console.log('Port ' + portName + ' is not defined as input port for this cell.');
+		console.log('Port ' + portName + ' is not defined as input port for this cell ' + target.instanceName);
 
 };
 
