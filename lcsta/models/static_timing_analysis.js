@@ -6,7 +6,7 @@ var STA = function(gates, constraints){ // Constructor
 	this.arrivalTimeCalculation = function(){ // Calculating arrival time
 		this._topologicalSorting(); // Sorting the graph for analysis
 
-		var calculated_capacitance = new Array(this.gates.length); 
+		/*var calculated_capacitance = new Array(this.gates.length); 
 		var current;
 		var current_index;
 		var child_index;
@@ -39,7 +39,7 @@ var STA = function(gates, constraints){ // Constructor
 					this._updateValues(parent, child, input_port); // Update the values for the child node
 				}
 			}
-		}
+		}*/
 	};
 
 	this.requiredTimeCalculation = function(){
@@ -288,7 +288,7 @@ var STA = function(gates, constraints){ // Constructor
 		}
 	}
 	// TEMP FIX!
-	this.gates.splice(1, 2);
+	//this.gates.splice(1, 2);
 	//
 	this.constraints = constraints; // Constraints
 	this.timing_graph = new Array(this.gates.length); // Structure to store the timing graph
@@ -332,10 +332,12 @@ var STA = function(gates, constraints){ // Constructor
 	}
 	// Timing path constructed
 
+	// Log the gates
 	for(var i=1; i<this.gates.length; i++){
 		console.log(this.gates[i].instanceName + " " + this.gates[i].getInputs().length + " " + this.gates[i].getOutputs().length);
 	}
 
+	// Log the timing graph
 	for(var i=0; i<this.timing_graph.length; i++){
 		console.log(i + " " + (i == 0 ? "Origin" : this.gates[i].instanceName));
 		console.log("Children:");
