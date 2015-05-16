@@ -80,15 +80,15 @@
                                                 <%if(cell.timing_violation){%>
                                                     <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Timing Viloation)</strong></a>
                                                      <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
-                                                        <a class="list-group-item violation">Arrival time: <%= cell.arrival_time%></a>
-                                                        <a class="list-group-item violation">Required time: <%= cell.required_time%></a>
+                                                        <a class="list-group-item violation">Arrival time: <%= cell.AAT%></a>
+                                                        <a class="list-group-item violation">Required time: <%= cell.RAT%></a>
                                                         <a class="list-group-item violation">Slack: <%= cell.slack%></a>
                                                     </div>
                                                 <%}else{%>
                                                     <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%></strong></a>
                                                     <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
-                                                        <a class="list-group-item">Arrival time: <%= cell.arrival_time%></a>
-                                                        <a class="list-group-item">Required time: <%= cell.required_time%></a>
+                                                        <a class="list-group-item">Arrival time: <%= cell.AAT%></a>
+                                                        <a class="list-group-item">Required time: <%= cell.RAT%></a>
                                                         <a class="list-group-item">Slack: <%= cell.slack%></a>
                                                     </div>
                                                 <%}%>
