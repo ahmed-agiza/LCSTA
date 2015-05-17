@@ -129,7 +129,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			if(typeof caps[wireName] !== undefined)
 				netCap = caps[wireName];
 			else
-				netCap = 0;
+				netCap = {};
 
 			wires[wireName] = {
 				name: wireName,
@@ -137,7 +137,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				input: {},
 				outputs: [],
 				type: 'wire',
-				net_capacitance: 0
+				net_capacitance: netCap
 			};
 
 			if (wireDirection == 'input'){
@@ -183,7 +183,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				if(typeof caps[wireName] !== undefined)
 					netCap = caps[wireName];
 				else
-					netCap = 0;
+					netCap = {};
 
 				wires[wireName] = {
 					name: wireName,
@@ -248,6 +248,12 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	}
 	
 	/****Connecting Extracted Gates****/
+	/*for(var key in cells){
+		var op = Object.keys(cells[key].outputPort)[0];
+		console.log(key);
+		console.log(cells[key].outputPort[op]);
+	}*/
+
 	for(var key in wires){
 		if(wires[key] != undefined && wires[key].type !== 'dummy_wire')
 			for(var i = 0; i < wires[key].outputs.length; i++){
@@ -255,24 +261,27 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 					console.log('Flying wire ' + key);
 					warnings.push('Flying wire ' + key);
 				}else{
-					if(wires[key].input.gate == cells['vdd'] || wires[key].outputs[i].gate == cells['gnd'])
-						console.log(wires[key]);
+					//console.log(key);
+					//console.log('B: ');
+					//console.log(cells['_2_'].outputPort['Y']);
 					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port, wires[key].net_capacitance);
+					//console.log('A: ');
+					//console.log(cells['_2_'].outputPort['Y']);
 				}
 			}
 	}
 
-	for(var key in cells){
-		if(cells[key].isFF()){
-			if(typeof skews !== 'undefined' && typeof skews[key] !== 'undefined')
-				cells[key].clock_skew = skews[key];
-			else
-				cells[key].clock_skew = 0;
-		}	
-	}
+	
+
 
 	delete cells.vdd;
 	delete cells.gnd;
+
+/*	for(var key in wires)
+		if(typeof wires[key] !== 'undefined')
+			console.log({'key': key, 'cap': wires[key].net_capacitance, type: wires[key].type});
+		else
+			console.log('--' + key);*/
 	
 
 	callback(null, cells, wires);

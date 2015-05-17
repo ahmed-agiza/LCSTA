@@ -320,8 +320,18 @@ module.exports.connect = function(source, target, portName, netCap){
 		if(target.inputs[portName].indexOf(source) == -1){
 			var op = Object.keys(source.outputPort)[0];
 			source.outputs[source.outputPort[op].name].push(target);
-			if(typeof netCap !== 'undefined')
-				source.outputPort[op].net_capacitance = netCap;
+
+			if(typeof source.outputPort[op].net_capacitance === 'undefined')
+				source.outputPort[op].net_capacitance = {};
+			
+			if(typeof source.outputPort[op].net_capacitance[target.instanceName] === 'undefined')
+				source.outputPort[op].net_capacitance[target.instanceName] = {};
+
+			if(typeof netCap === 'undefined' || typeof netCap[target.instanceName] === 'undefined' || typeof netCap[target.instanceName][portName] === 'undefined')
+				source.outputPort[op].net_capacitance[target.instanceName][portName] = 0;
+			else{
+				source.outputPort[op].net_capacitance[target.instanceName][portName] = netCap[target.instanceName][portName];
+			}
 
 			target.inputs[portName].push(source);
 		}else{
