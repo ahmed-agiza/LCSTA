@@ -213,10 +213,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																				        fs.unlink(constrPath);
 		       																			return;								
 														        					}else{
-														        						//console.log(cells['_2_'].outputPort['Y']);
-														        						//console.log(cells['_7_'].outputPort['Y']);
-														        						var StaticTimingAnalyser = new STA(cells, constr);
-
+														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
+														        						StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!

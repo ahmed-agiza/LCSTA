@@ -248,12 +248,6 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	}
 	
 	/****Connecting Extracted Gates****/
-	/*for(var key in cells){
-		var op = Object.keys(cells[key].outputPort)[0];
-		console.log(key);
-		console.log(cells[key].outputPort[op]);
-	}*/
-
 	for(var key in wires){
 		if(wires[key] != undefined && wires[key].type !== 'dummy_wire')
 			for(var i = 0; i < wires[key].outputs.length; i++){
@@ -261,28 +255,14 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 					console.log('Flying wire ' + key);
 					warnings.push('Flying wire ' + key);
 				}else{
-					//console.log(key);
-					//console.log('B: ');
-					//console.log(cells['_2_'].outputPort['Y']);
 					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port, wires[key].net_capacitance);
-					//console.log('A: ');
-					//console.log(cells['_2_'].outputPort['Y']);
 				}
 			}
 	}
 
-	
-
 
 	delete cells.vdd;
 	delete cells.gnd;
-
-/*	for(var key in wires)
-		if(typeof wires[key] !== 'undefined')
-			console.log({'key': key, 'cap': wires[key].net_capacitance, type: wires[key].type});
-		else
-			console.log('--' + key);*/
-	
 
 	callback(null, cells, wires);
 }

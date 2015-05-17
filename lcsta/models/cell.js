@@ -5,41 +5,43 @@
 var shortId = require('shortid');
 
 
-var port = function(name, direction, capacitance, rise_capacitance, fall_capacitance, max_capacitance, net_capacitance){
-	this.name = name;
 
-	if(typeof(direction) === 'undefined')
-		this.direction = 0;
-	else
-		this.direction = direction;
+var clone = function(obj) {
+    var copy;
 
-	if(typeof(capacitance) === 'undefined')
-		this.capacitance = 0;
-	else
-		this.capacitance = capacitance;
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) return obj;
 
-	if(typeof(rise_capacitance) === 'undefined')
-		this.rise_capacitance = 0;
-	else
-		this.rise_capacitance = rise_capacitance;
+    // Handle Date
+    if (obj instanceof Date) {
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
 
-	if(typeof(fall_capacitance) === 'undefined')
-		this.fall_capacitance = 0;
-	else
-		this.fall_capacitance = fall_capacitance;
+    // Handle Array
+    if (obj instanceof Array) {
+        copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = clone(obj[i]);
+        }
+        return copy;
+    }
 
-	if(typeof(max_capacitance) === 'undefined')
-		this.max_capacitance = 0;
-	else
-		this.max_capacitance = max_capacitance;
+    // Handle Object
+    if (obj instanceof Object) {
+        copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+        }
+        return copy;
+    }
 
-	if(typeof(net_capacitance) === 'undefined')
-		this.net_capacitance = 0;
-	else
-		this.net_capacitance = net_capacitance;
+    throw new Error("Unable to copy obj! Its type isn't supported.");
 }
 
-module.exports.port = port;
+module.exports.clone = clone;
+
 
 module.exports.cell = function(instanceName, libDef, libRef){
 	this.id = shortId.generate(); //Component ID.
@@ -94,11 +96,11 @@ module.exports.cell = function(instanceName, libDef, libRef){
 
 			for(var key in def.pins){
 				if (def.pins[key].direction == 'input'){
-					this.inputPorts[key] = def.pins[key];
+					this.inputPorts[key] = clone(def.pins[key]);
 				}else if (def.pins[key].direction == 'output'){
-					this.outputPort[key] = def.pins[key];
+					this.outputPort[key] = clone(def.pins[key]);
 				}else{
-					this.unkownPorts[key] = def.pins[key];
+					this.unkownPorts[key] = clone(def.pins[key]);
 				}
 			}
 			this.inputs = {};
@@ -321,7 +323,7 @@ module.exports.connect = function(source, target, portName, netCap){
 			var op = Object.keys(source.outputPort)[0];
 			source.outputs[source.outputPort[op].name].push(target);
 
-			if(typeof source.outputPort[op].net_capacitance === 'undefined')
+			if(typeof source.outputPort[op].net_capacitance !== 'object')
 				source.outputPort[op].net_capacitance = {};
 			
 			if(typeof source.outputPort[op].net_capacitance[target.instanceName] === 'undefined')
@@ -343,41 +345,6 @@ module.exports.connect = function(source, target, portName, netCap){
 };
 
 
-var clone = function(obj) {
-    var copy;
-
-    // Handle the 3 simple types, and null or undefined
-    if (null == obj || "object" != typeof obj) return obj;
-
-    // Handle Date
-    if (obj instanceof Date) {
-        copy = new Date();
-        copy.setTime(obj.getTime());
-        return copy;
-    }
-
-    // Handle Array
-    if (obj instanceof Array) {
-        copy = [];
-        for (var i = 0, len = obj.length; i < len; i++) {
-            copy[i] = clone(obj[i]);
-        }
-        return copy;
-    }
-
-    // Handle Object
-    if (obj instanceof Object) {
-        copy = {};
-        for (var attr in obj) {
-            if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
-        }
-        return copy;
-    }
-
-    throw new Error("Unable to copy obj! Its type isn't supported.");
-}
-
-module.exports.clone = clone;
 
 
 module.exports.templateCell = {
