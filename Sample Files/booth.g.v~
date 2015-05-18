@@ -7,8 +7,6 @@ module booth_encoder(mr, md, x, z);
   input [3:0] mr;
   output [3:0] x;
   output [3:0] z;
-  wire g;
-  wire f;
   INVX1 _2_ (
     .A(md[1]),
     .Y(_0_)
@@ -45,9 +43,9 @@ module booth_encoder(mr, md, x, z);
   XOR2X1 _9_ (
     .A(md[2]),
     .B(md[3]),
-    .Y(f/*z[3]*/)
+    .Y(z[3])
   );
   assign x[0] = md[0];
   assign z[0] = md[0];
-  assign f = g;
+
 endmodule

@@ -129,7 +129,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			if(typeof caps[wireName] !== undefined)
 				netCap = caps[wireName];
 			else
-				netCap = 0;
+				netCap = {};
 
 			wires[wireName] = {
 				name: wireName,
@@ -137,7 +137,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				input: {},
 				outputs: [],
 				type: 'wire',
-				net_capacitance: 0
+				net_capacitance: netCap
 			};
 
 			if (wireDirection == 'input'){
@@ -183,7 +183,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				if(typeof caps[wireName] !== undefined)
 					netCap = caps[wireName];
 				else
-					netCap = 0;
+					netCap = {};
 
 				wires[wireName] = {
 					name: wireName,
@@ -255,25 +255,14 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 					console.log('Flying wire ' + key);
 					warnings.push('Flying wire ' + key);
 				}else{
-					if(wires[key].input.gate == cells['vdd'] || wires[key].outputs[i].gate == cells['gnd'])
-						console.log(wires[key]);
 					Connect(wires[key].input.gate, wires[key].outputs[i].gate, wires[key].outputs[i].port, wires[key].net_capacitance);
 				}
 			}
 	}
 
-	for(var key in cells){
-		if(cells[key].isFF()){
-			if(typeof skews !== 'undefined' && typeof skews[key] !== 'undefined')
-				cells[key].clock_skew = skews[key];
-			else
-				cells[key].clock_skew = 0;
-		}	
-	}
 
 	delete cells.vdd;
 	delete cells.gnd;
-	
 
 	callback(null, cells, wires);
 }
