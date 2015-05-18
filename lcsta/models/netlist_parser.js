@@ -142,11 +142,11 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			};
 
 			if (wireDirection == 'input'){
-				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
+				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells, function(err){if (err) warnings.push(err);});
 				cells['___input_' + wireName].IO_wire = wireName;
 				wires[wireName].input = {port: 'Y', gate: cells['___input_' + wireName]};
 			}else if (wireDirection == 'output'){
-				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
+				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells, function(err){if (err) warnings.push(err);});
 				cells['___output_' + wireName].IO_wire = wireName;
 				wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 			}
@@ -198,11 +198,11 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				};
 
 				if (wireDirection == 'input'){
-					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
+					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells, function(err){if (err) warnings.push(err);});
 					cells['___input_' + wireName].IO_wire = wireName;
 					wires[wireName].input = {port: 'A', gate: cells['___input_' + wireName]};
 				}else if (wireDirection == 'output'){
-					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
+					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells, function(err){if (err) warnings.push(err);});
 					cells['___output_' + wireName].IO_wire = wireName;
 					wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 				}
@@ -213,7 +213,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			var cellDef = stdcells.cells[cellDefName];
 			var cellName = matchedGroups[2].trim();
 			var rawParams = matchedGroups[3].trim();
-			cells[cellName] = new Cell(cellName, cellDef, stdcells);
+			cells[cellName] = new Cell(cellName, cellDef, stdcells, function(err){if (err) warnings.push(err);});
 			cells[cellName].model = cellDefName;
 			var paramsList = rawParams.split(',');
 			for(var i = 0; i < paramsList.length; i++){

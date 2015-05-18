@@ -54,8 +54,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 	
 	var fileWarnings = [];
 	var emptyClkPath = './empty_temp/empty.clk.json';
-	var emptyCapPath = './empty_temp/empty.clk.json';
-	var emptyConstrPath = './empty_temp/empty.clk.json';
+	var emptyCapPath = './empty_temp/empty.cap.json';
+	var emptyConstrPath = './empty_temp/empty.constr.json';
 
 	fs.writeFileSync(emptyClkPath, '{}');
 	fs.writeFileSync(emptyCapPath, '{}'); 
