@@ -173,7 +173,7 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 			tps.compile(this.points, this.targets);
 
 			var targetPoint = [row, column];
-			return tps.getValues([targetPoint]);
+			return tps.getValues([targetPoint]).ys[0];
 		};
 
 	}else{
@@ -209,7 +209,7 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 
 			var targetPoint = [column];
 
-			return tps.getValues([targetPoint]);
+			return tps.getValues([targetPoint]).ys[0];
 		}
 
 	}

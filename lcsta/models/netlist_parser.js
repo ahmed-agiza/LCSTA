@@ -79,8 +79,9 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				 'gnd_wire': {name: 'gnd_wire', direction: 'input', input: {port: 'Y', gate: cells.gnd}, outputs: [], type: 'dummy_wire', net_capacitance: 0}};
 	if(endmoduleCount != 1 || moduleCount != 1){
 		console.log('Invalid input');
-		return callback('Invalid input.', null);
+		return callback('Invalid input.', warnings, null, null);
 	}
+	
 	data = data.replace(endmoduleKeywordRegex, ''); //Removing 'endmodule'.
 	var moduleName = moduleKeywordRegex.exec(data)[1];
 
@@ -141,10 +142,12 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			};
 
 			if (wireDirection == 'input'){
-				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
+				cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells, function(err){if (err) warnings.push(err);});
+				cells['___input_' + wireName].IO_wire = wireName;
 				wires[wireName].input = {port: 'Y', gate: cells['___input_' + wireName]};
 			}else if (wireDirection == 'output'){
-				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
+				cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells, function(err){if (err) warnings.push(err);});
+				cells['___output_' + wireName].IO_wire = wireName;
 				wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 			}
 
@@ -195,10 +198,12 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				};
 
 				if (wireDirection == 'input'){
-					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells);
+					cells['___input_' + wireName] = new Cell('___input_' + wireName, stdcells.cells.input, stdcells, function(err){if (err) warnings.push(err);});
+					cells['___input_' + wireName].IO_wire = wireName;
 					wires[wireName].input = {port: 'A', gate: cells['___input_' + wireName]};
 				}else if (wireDirection == 'output'){
-					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells);
+					cells['___output_' + wireName] = new Cell('___output_' + wireName, stdcells.cells.output, stdcells, function(err){if (err) warnings.push(err);});
+					cells['___output_' + wireName].IO_wire = wireName;
 					wires[wireName].outputs.push({port: 'A', gate: cells['___output_' + wireName]});
 				}
 			}
@@ -208,7 +213,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			var cellDef = stdcells.cells[cellDefName];
 			var cellName = matchedGroups[2].trim();
 			var rawParams = matchedGroups[3].trim();
-			cells[cellName] = new Cell(cellName, cellDef, stdcells);
+			cells[cellName] = new Cell(cellName, cellDef, stdcells, function(err){if (err) warnings.push(err);});
 			cells[cellName].model = cellDefName;
 			var paramsList = rawParams.split(',');
 			for(var i = 0; i < paramsList.length; i++){
@@ -229,6 +234,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 						wires[connectionWire].input = {port: targetPort, gate: cells[cellName]};
 					}else{
 						console.log('Unkown pin direction for pin ' + targetPort);
+						warnings.push('Unkown pin direction for pin ' + targetPort)
 					}
 				}
 			}
@@ -264,5 +270,5 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	delete cells.vdd;
 	delete cells.gnd;
 
-	callback(null, cells, wires);
+	callback(null, warnings, cells, wires);
 }

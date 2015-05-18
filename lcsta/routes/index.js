@@ -50,47 +50,63 @@ router.get('/report', function(req, res){ //Timing report view.
 
 
 router.post('/report', function(req, res){ //Generate timing report.
+
+	
+	var fileWarnings = [];
+	var emptyClkPath = './empty_temp/empty.clk.json';
+	var emptyCapPath = './empty_temp/empty.cap.json';
+	var emptyConstrPath = './empty_temp/empty.constr.json';
+
+	fs.writeFileSync(emptyClkPath, '{}');
+	fs.writeFileSync(emptyCapPath, '{}'); 
+	fs.writeFileSync(emptyConstrPath, '{}');
+
+	var netlistPath; //Netlist file path.
+	var stdcellPath; //Stdcell file path.
+	var clkPath; //Clock skews file path.
+	var capPath; //Net capacitances file path.
+	var constrPath; //Timing constraints file path.
+
 	if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
 		res.redirect('/');
 		return;
-	}
+	}else
+		netlistPath = './' + req.files.netlist.path;
 
 	if(typeof(req.files.stdcell) === 'undefined'){
 		console.log('No standard cell file uploaded');
 		req.flash('error', 'Select a standard cell library file to process.');
 		res.redirect('/');
 		return;
-	}
+	}else
+		stdcellPath = req.files.stdcell.path;
 
 	if(typeof(req.files.clk) === 'undefined'){
-		console.log('No clock skews file uploaded');
-		req.flash('error', 'Select a clock skews file to process.');
-		res.redirect('/');
-		return;
-	}
+		fileWarnings.push('No clock skews file uploaded, assuming empty file.');
+		console.log('No clock skews file uploaded.');
+		clkPath = emptyClkPath;
+	}else
+		clkPath = './' + req.files.clk.path;
+	
+
 
 	if(typeof(req.files.cap) === 'undefined'){
-		console.log('No net capacitances files uploaded');
-		req.flash('error', 'Select net capacitances files to process.');
-		res.redirect('/');
-		return;
-	}
+		fileWarnings.push('No net capacitances file uploaded, assuming empty file.');
+		console.log('No net capacitances file uploaded.');
+		capPath = emptyCapPath;
+	}else
+		capPath = './' + req.files.cap.path; 
 
 
 	if(typeof(req.files.constr) === 'undefined'){
-		console.log('No constraints files uploaded');
-		req.flash('error', 'Select net capacitances files to process.');
-		res.redirect('/');
-		return;
-	}
+		fileWarnings.push('No constraints file uploaded, assuming empty file.')
+		console.log('No constraints file uploaded.');
+		constrPath = emptyConstrPath;
+	}else
+		constrPath = './' + req.files.constr.path;
 
-	var netlistPath = './' + req.files.netlist.path; //Netlist file path.
-	var stdcellPath = './' + req.files.stdcell.path; //Stdcell file path.
-	var clkPath = './' + req.files.clk.path; //Clock skews file path.
-	var capPath = './' + req.files.cap.path; //Net capacitances file path.
-	var constrPath = './' + req.files.constr.path; //Timing constraints file path.
 
 	fs.readFile(stdcellPath, 'utf8', function(err, stdcellData){
 		if(err){
@@ -201,7 +217,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 																		        fs.unlink(constrPath);
 		       																	return;
 												        					}else{
-												        						VerilogParser.parse(netlistData, stdcells, caps, skews, function(err, cells){
+												        						VerilogParser.parse(netlistData, stdcells, caps, skews, function(err, warnings, cells, wires){
 												        							if(err){
 														        						console.log(err);
 																		    			req.flash('error', 'Error while parsing the netlist file.');
@@ -213,8 +229,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																				        fs.unlink(constrPath);
 		       																			return;								
 														        					}else{
-														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
-														        						StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
+														        						//var StaticTimingAnalyser = new STA(cells, constr); // STA construction
+														        						//StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!
@@ -262,15 +278,66 @@ router.post('/report', function(req, res){ //Generate timing report.
 															        							cellItem.name = cells[key].instanceName;
 															        							var cellInputs = cells[key].getInputs();
 															        							var cellOutputs = cells[key].getOutputs();
+															        							var inputNames = [];
+															        							var outputNames = [];
 															        							if(typeof cellInputs !== 'undefined')
-															        								cellItem.number_of_inputs = cells[key].getInputs().length;
+															        								cellItem.number_of_inputs = cellInputs.length;
 															        							else
 															        								cellItem.number_of_inputs = 0;
+
+															        							cellInputs.forEach(function(inputGate){
+															        									if(!inputGate.is_dummy){
+															        										if(inputGate.is_input)
+															        											inputNames.push('input ' + inputGate.IO_wire);
+															        										else if (inputGate.is_output)
+															        											inputNames.push('output ' + inputGate.IO_wire + ')');
+															        										else
+															        											inputNames.push(inputGate.instanceName);
+															        									}
+															        							});
+
 															        							if(typeof cellOutputs !== 'undefined')
-															        								cellItem.number_of_outputs = cells[key].getOutputs().length;
+															        								cellItem.number_of_outputs =cellOutputs.length;
 															        							else
 															        								cellItem.number_of_outputs = 0;
 
+															        							cellOutputs.forEach(function(outputGate){
+															        									if(!outputGate.is_dummy){
+															        										if(outputGate.is_input)
+															        											outputGate.push('input ' + outputGate.IO_wire);
+															        										else if (outputGate.is_output)
+															        											outputNames.push('output ' + outputGate.IO_wire);
+															        										else
+															        											outputNames.push(outputGate.instanceName);
+															        									}
+															        							});
+															        							cellItem.input_names = '';
+															        							cellItem.output_names = ';'
+															        							if(inputNames.length > 0){
+															        								if(inputNames.length == 1)
+															        									cellItem.input_names = inputNames[0];
+															        								else
+																        								for(var i = 0; i < inputNames.length; i++)
+																        									if(i == 0)
+																        										cellItem.input_names = '[' + inputNames[i];
+																        									else if (i == inputNames.length - 1)
+																        										cellItem.input_names = cellItem.input_names + ',  ' + inputNames[i] + ']';
+																        									else
+																        										cellItem = cellItem.input_names + ',  ' + inputNames[i];
+															        							}
+
+															        							if(outputNames.length > 0){
+															        								if(outputNames.length == 1)
+															        									cellItem.output_names =  outputNames[0];
+															        								else
+																        								for(var i = 0; i < outputNames.length; i++)
+																        									if(i == 0)
+																        										cellItem.output_names = '[' + outputNames[i];
+																        									else if (i == outputNames.length - 1)
+																        										cellItem.output_names = cellItem.output_names + ',  ' + outputNames[i] + ']';
+																        									else
+																        										cellItem = cellItem.output_names + ',  ' + outputNames[i];
+															        							}
 															        							cellItem.size = cells[key].size;
 															        							cellItem.module = cells[key].cellName;
 															        							cellsContents.push(cellItem);
@@ -333,7 +400,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        						
 														        						res.render('report', {title: 'Timing Report',
 														        											  error: '',
-														        											  warnings: '[]',
+														        											  warnings: JSON.stringify(warnings),
+														        											  files_warnings: JSON.stringify(fileWarnings),
 														        											  verilog_code: netlistData,
 														        											  netlist_cells: JSON.stringify(cellsContents),
 														        											  stdcells: JSON.stringify(stdCellsContent),

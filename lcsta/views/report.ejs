@@ -29,8 +29,8 @@
         </script>
         <style type="text/css">
             #editor { 
-            height: 80vh;
-            width: 80vw;
+                height: 80vh;
+                width: 80vw;
             }
         </style>
         <div class = "row-header row">
@@ -122,12 +122,16 @@
                             <div>
                                 <%if (error == ''){%>
                                 <% warningsArray = JSON.parse(warnings) %>
-                                <%if (warningsArray.length == 0){%>
+                                <% filesWarnings = JSON.parse(files_warnings) %>
+                                <%if (warningsArray.length == 0 && filesWarnings.length == 0){%>
                                 <p>No errors or warnings detected.</p>
                                 <%}else{%>
                                 <ul class="list-group">
+                                    <%filesWarnings.forEach(function(warn){%>
+                                         <li class="list-group-item">Input Warning: <%=warn%></li>
+                                    <%})%>
                                     <%warningsArray.forEach(function(warn){%>
-                                    <li class="list-group-item"><%=warn%></li>
+                                         <li class="list-group-item"><%=warn%></li>
                                     <%})%>
                                 </ul>
                                 <%}%>
@@ -166,7 +170,6 @@
                                 
                                 <div id="netlist-menu">
                                 <strong> Extracted Modules: </strong>
-                                    <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="expandNetlist();">Expand All</button> &nbsp; <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="collapseNetlist();">Collapse All</button>
                                     <div class="panel list-group">
                                         <% netlistCells = JSON.parse(netlist_cells) %>
                                         <% netlistCells.forEach(function(cell){%>
@@ -175,7 +178,10 @@
                                             <a class="list-group-item">Module: <%= cell.module%></a>
                                             <a class="list-group-item">Number of Inputs: <%= cell.number_of_inputs%></a>
                                             <a class="list-group-item">Number of Outputs: <%= cell.number_of_outputs%></a>
+                                             <a class="list-group-item">Inputs: <%= cell.input_names%></a>
+                                            <a class="list-group-item">Outputs: <%= cell.output_names%></a>
                                             <a class="list-group-item">Size: <%= cell.size%></a>
+
                                         </div>
                                         <%})%>
                                     </div>

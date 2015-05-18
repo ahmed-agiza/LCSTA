@@ -3,6 +3,7 @@
 module booth_encoder(mr, md, x, z);
   wire _0_;
   wire _1_;
+	wire _1_;
   input [3:0] md;
   input [3:0] mr;
   output [3:0] x;

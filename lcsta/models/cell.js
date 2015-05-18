@@ -43,7 +43,7 @@ var clone = function(obj) {
 module.exports.clone = clone;
 
 
-module.exports.cell = function(instanceName, libDef, libRef){
+module.exports.cell = function(instanceName, libDef, libRef, cb){
 	this.id = shortId.generate(); //Component ID.
 	this.inputs = {}; //Inputs objects.
 	this.outputs = {}; //Outputs objects.
@@ -101,6 +101,8 @@ module.exports.cell = function(instanceName, libDef, libRef){
 				}else if (def.pins[key].direction == 'output'){
 					this.outputPort[key] = clone(def.pins[key]);
 				}else{
+					if(typeof cb !== 'undefined')
+						cb('Unkown direction for port ' + key + '.');
 					this.unkownPorts[key] = clone(def.pins[key]);
 				}
 			}
@@ -132,8 +134,11 @@ module.exports.cell = function(instanceName, libDef, libRef){
 			}
 			
 
-		}else
+		}else{
+			if(typeof cb !== 'undefined')
+				cb('No definition for the module ' + instanceName)
 			console.log('No definition for ' + instanceName);
+		}
 	};
 
 	this.setDefinition(libDef, libRef);
@@ -318,7 +323,7 @@ module.exports.cell = function(instanceName, libDef, libRef){
 
 
 
-module.exports.connect = function(source, target, portName, netCap){
+module.exports.connect = function(source, target, portName, netCap, cb){
 	if(typeof(target.inputPorts[portName]) !== 'undefined'){
 		if(target.inputs[portName].indexOf(source) == -1){
 			var op = Object.keys(source.outputPort)[0];
@@ -338,10 +343,15 @@ module.exports.connect = function(source, target, portName, netCap){
 
 			target.inputs[portName].push(source);
 		}else{
+			if(typeof cb !== 'undefined')
+				cb('Connection already exists.')
 			console.log('Connection already exists.');
 		}
-	}else
+	}else{
+		if(typeof cb !== 'undefined')
+			cb('Port ' + portName + ' is not defined as input port for this cell ' + target.instanceName);
 		console.log('Port ' + portName + ' is not defined as input port for this cell ' + target.instanceName);
+	}
 
 };
 
