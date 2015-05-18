@@ -36,6 +36,9 @@ var STA = function(gates, constraints){ // Constructor
 						console.log("FF");
 						this._initializeFF(child, child_index);
 				}
+				else if(child.is_output){ // Output pin
+
+				}
 				else{
 					// Calculate the capacitance load of the child
 					if(!calculated_capacitance[child_index]){ // If not previously computed
