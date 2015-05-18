@@ -530,7 +530,22 @@ function parseCell(cellDefinition, templates){
 					relatedPin = getQuotedRegex().exec(relatedPin)[1];
 				timingContent = timingContent.replace(relatedPinRegex, '');
 			}
-				newCell.pins[pinName].timing[relatedPin] = parseTableObject(timingContent, templates);
+				
+				var table = parseTableObject(timingContent, templates);
+				if(newCell.is_ff && pinName == newCell.ff['next_state']){
+
+					if(typeof table.timing_type !== 'undefined'){
+						newCell[table.timing_type] = table;
+						if(typeof newCell.pins[pinName].timing[relatedPin] === 'undefined')
+								newCell.pins[pinName].timing[relatedPin] = {};
+
+						newCell.pins[pinName].timing[relatedPin][table.timing_type] = table;
+					}else{
+						console.log('Undefined timing type: ' + table);
+						newCell.pins[pinName].timing[relatedPin] = table[key];
+					}
+				}else
+					newCell.pins[pinName].timing[relatedPin] = table;
 				pinDef = timingScope.slicedData;
 		}
 
@@ -707,6 +722,8 @@ module.exports.parse = function(content, callback){
 			if(library.cells[key].available_sizes.indexOf(sizeKey) == -1)
 				library.cells[key].available_sizes.push(parseInt(sizeKey));
 	}
+
+
 
 	callback(null, library);
 }

@@ -58,7 +58,7 @@ app.use(multer({
                                  fs.unlink('./' + file.path);
                             },
     rename:                 function (fieldname, filename) {
-                                return filename.replace(/\W+/g, '-').toLowerCase() + Date.now();
+                                return filename.replace(/\W+/g, '-').toLowerCase() + Date.now() + ('' + Math.random()).split('.')[1];
                             }
 
 
