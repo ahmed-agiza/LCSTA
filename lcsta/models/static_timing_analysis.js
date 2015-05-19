@@ -26,15 +26,38 @@ var STA = function(gates, constraints){
 				this._updateValues(current, child, child_index, input_port, start_flag); // Update the values on the nodes
 			}
 		}
+	};
 
-		/*for(var i=0; i<this.timing_graph.length; i++){
-			console.log(this.gates[i].instanceName);
-			console.log("--");
-			for(var j=0; j<this.timing_graph[i].children.length; j++){
-				console.log(this.gates[this.timing_graph[i].children[j].gate].instanceName);
+	this.requiredTimeCalculation = function(){ // Calculate required time
+		this._topologicalSorting(false); // Topological sorting for backward traversal
+
+		var current;
+		var current_index;
+		var child;
+		var child_index;
+		var start_flag;
+		for(var i=0; i<this.backward_ordering.length; i++){
+			current_index = this.backward_ordering[i].gate;
+			current = this.gates[current_index];
+			start_flag = this.backward_ordering[i].starting;
+			for(var j=0; j<this.timing_graph[current_index].parents.length; j++){
+				child_index = this.timing_graph[current_index].parents[j];
+				child = this.gates[child_index];
+				if(child_index == 0) continue;
+
+				this._evaluateRequiredTime(current, child, start_flag); // Evaluate the required time for the nodes
 			}
-			console.log("------------------");
-		}*/
+		}
+	};
+
+	this.calculateSlack = function(){
+		for(var i=1; i<this.gates.length; i++){
+			if(this.gates[i].isFF()){
+				this.gates[i].slack_FF_start = this.gates[i].RAT_FF_start - this.gates[i].AAT_FF_start;
+			}
+			this.gates[i].slack = this.gates[i].RAT - this.gates[i].AAT_max;
+		}
+
 		for(var i=1; i<this.forward_ordering.length; i++){
 			console.log(i + " " + this.gates[this.forward_ordering[i]].instanceName);
 			console.log("Input Slew " + this.gates[this.forward_ordering[i]].input_slew.max + ", " + this.gates[this.forward_ordering[i]].input_slew.min);
@@ -44,33 +67,14 @@ var STA = function(gates, constraints){
 			console.log("Max AAT " + this.gates[this.forward_ordering[i]].AAT_max);
 			if(this.gates[this.forward_ordering[i]].isFF())
 				console.log("Starting AAT " + this.gates[this.forward_ordering[i]].AAT_FF_start);
+			console.log("RAT " + this.gates[this.forward_ordering[i]].RAT);
+			if(this.gates[this.forward_ordering[i]].isFF())
+				console.log("Starting RAT " + this.gates[this.forward_ordering[i]].RAT_FF_start);
+			console.log("Slack " + this.gates[this.forward_ordering[i]].slack);
+			if(this.gates[this.forward_ordering[i]].isFF())
+				console.log("Starting Slack " + this.gates[this.forward_ordering[i]].slack_FF_start);
 			console.log("------------------");
 		}
-	};
-
-	this.requiredTimeCalculation = function(){ // Calculate required time
-		this._topologicalSorting(false); // Topological sorting for backward traversal
-
-		console.log(this.forward_ordering);
-		console.log(this.backward_ordering);
-		/*var current;
-		var current_index;
-		var child;
-		var child_index;
-		for(var i=0; i<this.backward_ordering.length; i++){
-			current_index = this.backward_ordering[i];
-			current = this.gates[current_index];
-			for(var j=0; j<this.timing_graph[current_index].parent; j++){
-				child_index = this.timing_graph[current_index].parent[j];
-				child = this.gates[child_index];
-
-				this._evaluateRequiredTime(current, child); // Evaluate the required time for the nodes
-			}
-		}*/
-	};
-
-	this.calculateSlack = function(){
-
 	};
 
 	this.generateTimingReport = function(){
@@ -160,19 +164,36 @@ var STA = function(gates, constraints){
 			}
 		}
 		else{ // Topological sorting for the reverse traversal
+			var child_index;
+			var origin_index;
+			for(var i=0; i<temp_timing_graph[0].children.length; i++){ // Remove origin connections
+				child_index = temp_timing_graph[0].children[i].gate;
+				temp_timing_graph[0].children.splice(i, 1);
+				origin_index = temp_timing_graph[child_index].parents.indexOf(0);
+				temp_timing_graph[child_index].parents.splice(origin_index, 1); // Remove origin
+				i--;
+			}
+
 			for(var i=1; i<this.gates.length; i++){
 				if(this.gates[i].is_output || this.gates[i].isFF()){ // If it is an ending node
-					starting.push(i);
+					starting.push({
+						gate: i,
+						starting: true
+					});
 				}
 			}
 			while(starting.length > 0){
 				current = starting[0];
 				starting.splice(0, 1); // remove the first element
 				this.backward_ordering.push(current);
-				for(var i=0; i<temp_timing_graph[current].parents.length; i++){ // Go over parents
-					child_index = temp_timing_graph[current].parents[i];
+				for(var i=0; i<temp_timing_graph[current.gate].parents.length; i++){ // Go over parents
+					// Needed to avoid cycling into the parents of the FF as it is modelled as 2 nodes
+					child_index = temp_timing_graph[current.gate].parents[i];
+					temp_timing_graph[current.gate].parents.splice(i, 1);
+					i--;
+					//
 					for(var j=0; j<temp_timing_graph[child_index].children.length; j++){ // Find the edge from parent to child
-						if(temp_timing_graph[child_index].children[j].gate == current){
+						if(temp_timing_graph[child_index].children[j].gate == current.gate){
 							element_index = j;
 							break;
 						}
@@ -180,7 +201,10 @@ var STA = function(gates, constraints){
 					temp_timing_graph[child_index].children.splice(element_index, 1); // Remove the edge
 
 					if(temp_timing_graph[child_index].children.length == 0) // No more incoming edges
-						starting.push(child_index);
+						starting.push({
+							gate: child_index,
+							starting: false
+						});
 				}
 			}
 		}
@@ -433,9 +457,20 @@ var STA = function(gates, constraints){
 		}	
 	}
 
-	this._evaluateRequiredTime = function(parent, child){ // Calculate RAT
-		if(parent.is_output){
+	this._evaluateRequiredTime = function(parent, child, start_flag){ // Calculate RAT
+		// Evaluate the end nodes
+		if(parent.is_output){ // Output pin
+			parent.RAT = this.clock;
+		}
+		else if(parent.isFF() && start_flag){ // Ending FF
+			parent.RAT = this.clock + parent.clock_skew;
+		}
 
+		if(child.isFF()){ // Starting FF
+			child.RAT_FF_start = Math.min(child.RAT_FF_start, parent.RAT - parent.gate_delay.max);
+		}
+		else{ // Normal handling
+			child.RAT = Math.min(child.RAT, parent.RAT - child.gate_delay.max);
 		}
 	};
 
