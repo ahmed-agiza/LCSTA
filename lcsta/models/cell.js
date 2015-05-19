@@ -53,12 +53,24 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 	
 
 	// -------------------------For STA--------------------------------
-	this.AAT = 0; // Actual Arrival Time
-	this.AAT_FF_start = 0; // For starting of FF
-	this.RAT = 0; // Required Arrival Time
+	this.AAT_max = 0; // Maximum Actual Arrival Time
+	this.AAT_min = Number.MAX_VALUE; // Minimum Actual Arrival Time
+	this.RAT = Number.MAX_VALUE; // Required Arrival Time
 	this.slack = 0; // Gate slack
+	this.AAT_FF_start = 0; // For starting of FF
+	this.RAT_FF_start = Number.MAX_VALUE; // For starting FF
+	this.slack_FF_start = 0; // For starting FF
 	this.clock_skew; // Clock skew: Used for FF only
 	this.isClock = false; // Is the node the clock pin
+
+	this.setup = { // Setup time: Used for FF only
+		max: -1,
+		min: Number.MAX_VALUE
+	}
+	this.hold = { // Hold time: Used for FF only
+		max: -1,
+		min: Number.MAX_VALUE
+	}
 
 	this.input_slew = { // Maximum and minimum input slew rates
 		max: -1,
