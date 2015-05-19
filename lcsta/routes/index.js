@@ -230,7 +230,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        					}else{
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
 														        						StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
-														        						StaticTimingAnalyser.requiredTimeCalculation(); // RAT evaluation
+														        						//StaticTimingAnalyser.requiredTimeCalculation(); // RAT evaluation
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!

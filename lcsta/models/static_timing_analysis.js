@@ -35,20 +35,23 @@ var STA = function(gates, constraints){
 			}
 			console.log("------------------");
 		}*/
-		/*for(var i=1; i<this.forward_ordering.length; i++){
+		for(var i=1; i<this.forward_ordering.length; i++){
 			console.log(i + " " + this.gates[this.forward_ordering[i]].instanceName);
 			console.log("Input Slew " + this.gates[this.forward_ordering[i]].input_slew.max + ", " + this.gates[this.forward_ordering[i]].input_slew.min);
 			console.log("Output Slew " + this.gates[this.forward_ordering[i]].output_slew.max + ", " + this.gates[this.forward_ordering[i]].output_slew.min);
 			console.log("Capacitance Load " + this.gates[this.forward_ordering[i]].capacitance_load.max + ", " + this.gates[this.forward_ordering[i]].capacitance_load.min);
 			console.log("Gate Delay " + this.gates[this.forward_ordering[i]].gate_delay.max + ", " + this.gates[this.forward_ordering[i]].gate_delay.min);
 			console.log("Max AAT " + this.gates[this.forward_ordering[i]].AAT_max);
+			if(this.gates[this.forward_ordering[i]].isFF())
+				console.log("Starting AAT " + this.gates[this.forward_ordering[i]].AAT_FF_start);
 			console.log("------------------");
-		}*/
+		}
 	};
 
 	this.requiredTimeCalculation = function(){ // Calculate required time
 		this._topologicalSorting(false); // Topological sorting for backward traversal
 
+		console.log(this.forward_ordering);
 		console.log(this.backward_ordering);
 		/*var current;
 		var current_index;
@@ -238,14 +241,30 @@ var STA = function(gates, constraints){
 		var new_min = false;
 
 		if(child.is_output){ // Handled separately since the output pin doesn't have output ports
-			if(child.instanceName in this.output_delays)
+			// Input slew
+			child.input_slew.max = parent.output_slew.max;
+			child.input_slew.min = parent.output_slew.min;
+
+			// Output slew
+			child.output_slew.max = child.input_slew.max;
+			child.output_slew.min = child.input_slew.min;
+
+			// Gate delay
+			if(child.instanceName in this.output_delays){
 				output_delay = this.output_delays[child.instanceName];
-			else
-				output_delay = 0;
+				child.gate_delay.max = Math.max(output_delay.cell_rise, output_delay.cell_fall);
+				child.gate_delay.min = Math.min(output_delay.cell_rise, output_delay.cell_fall);
+			}
+			else{
+				child.gate_delay.max = 0;
+				child.gate_delay.min = 0;
+			}
+
+			// AAT
 			if(parent.isFF()) // If parent is a FF
-				child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + output_delay);
+				child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.gate_delay.max);
 			else
-				child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + output_delay);
+				child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.gate_delay.max);
 			return;
 		}
 
@@ -397,7 +416,10 @@ var STA = function(gates, constraints){
 
 			// Ending FF
 			else if(child.isFF()){
-				child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.setup.max);
+				if(parent.isFF()) // If parent is a FF
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.setup.max);
+				else
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.setup.max);
 			}
 
 			// Normal handling

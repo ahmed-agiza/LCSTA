@@ -53,7 +53,8 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 	
 
 	// -------------------------For STA--------------------------------
-	this.AAT = 0; // Actual Arrival Time
+	this.AAT_max = 0; // Maximum Actual Arrival Time
+	this.AAT_min = Number.MAX_VALUE; // Minimum Actual Arrival Time
 	this.AAT_FF_start = 0; // For starting of FF
 	this.RAT = 0; // Required Arrival Time
 	this.slack = 0; // Gate slack
