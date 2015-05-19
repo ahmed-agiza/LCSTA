@@ -132,7 +132,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 						fs.unlink(constrPath);
 						return;
 		    		}else{
-		    			var tbl = stdcells.cells['AND2X1'].pins['Y'].timing['A'].cell_rise;
 		    			fs.readFile(capPath, 'utf8', function(err, capData){
 		    				if(err){
 				    			console.log(err);

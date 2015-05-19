@@ -113,6 +113,13 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 			this.is_ff = def.is_ff;
 			this.is_latch = def.is_latch;
 
+			if(def.is_ff){
+				if('setup_rising' in def)
+					this.setup_rising = clone(def.setup_rising);
+				if('hold_rising' in def)
+					this.hold_rising = clone(def.hold_rising);
+			}
+
 			if(typeof def.is_input !== 'undefined')
 				this.is_input = def.is_input;
 			else
@@ -332,8 +339,7 @@ module.exports.connect = function(source, target, portName, netCap, cb){
 			if(typeof source.outputPort[op].net_capacitance !== 'object')
 				source.outputPort[op].net_capacitance = {};
 			
-			if(typeof source.outputPort[op].net_capacitance[target.instanceName] === 'undefined')
-				source.outputPort[op].net_capacitance[target.instanceName] = {};
+			source.outputPort[op].net_capacitance[target.instanceName] =  source.outputPort[op].net_capacitance[target.instanceName] || {};
 
 			if(typeof netCap === 'undefined' || typeof netCap[target.instanceName] === 'undefined' || typeof netCap[target.instanceName][portName] === 'undefined')
 				source.outputPort[op].net_capacitance[target.instanceName][portName] = 0;
