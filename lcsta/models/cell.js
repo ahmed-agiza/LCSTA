@@ -60,6 +60,15 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 	this.clock_skew; // Clock skew: Used for FF only
 	this.isClock = false; // Is the node the clock pin
 
+	this.setup = { // Setup time: Used for FF only
+		max: -1,
+		min: Number.MAX_VALUE
+	}
+	this.hold = { // Hold time: Used for FF only
+		max: -1,
+		min: Number.MAX_VALUE
+	}
+
 	this.input_slew = { // Maximum and minimum input slew rates
 		max: -1,
 		min: Number.MAX_VALUE
