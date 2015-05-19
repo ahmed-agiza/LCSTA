@@ -133,15 +133,9 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 					this.hold_rising = clone(def.hold_rising);
 			}
 
-			if(typeof def.is_input !== 'undefined')
-				this.is_input = def.is_input;
-			else
-				this.is_input = false;
-
-			if(typeof def.is_output !== 'undefined')
-				this.is_output = def.is_output;
-			else
-				this.is_output = false;
+			this.is_input = def.is_input || false;
+			
+			this.is_output = def.is_output || false;
 			
 			if(!def.is_dummy){
 				this.area = def.area;

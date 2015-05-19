@@ -282,11 +282,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 															        							var cellOutputs = cells[key].getOutputs();
 															        							var inputNames = [];
 															        							var outputNames = [];
-															        							if(typeof cellInputs !== 'undefined')
-															        								cellItem.number_of_inputs = cellInputs.length;
-															        							else
-															        								cellItem.number_of_inputs = 0;
-
+															        							cellItem.number_of_inputs = (cellInputs || []).length;															        							
 															        							cellInputs.forEach(function(inputGate){
 															        									if(!inputGate.is_dummy){
 															        										if(inputGate.is_input)
@@ -298,11 +294,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 															        									}
 															        							});
 
-															        							if(typeof cellOutputs !== 'undefined')
-															        								cellItem.number_of_outputs =cellOutputs.length;
-															        							else
-															        								cellItem.number_of_outputs = 0;
-
+															        							cellItem.number_of_outputs = (cellOutputs || []).length;
 															        							cellOutputs.forEach(function(outputGate){
 															        									if(!outputGate.is_dummy){
 															        										if(outputGate.is_input)
