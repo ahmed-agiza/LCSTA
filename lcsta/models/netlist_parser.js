@@ -126,11 +126,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 				warnings.push('Redeclaration of the wire ' + wireName);
 			}
 
-			var netCap;
-			if(typeof caps[wireName] !== undefined)
-				netCap = caps[wireName];
-			else
-				netCap = {};
+			var netCap = caps[wireName] || {};
 
 			wires[wireName] = {
 				name: wireName,
@@ -182,11 +178,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 					warnings.push('Redeclaration of the wire ' + wireName);
 				}
 
-				var netCap;
-				if(typeof caps[wireName] !== undefined)
-					netCap = caps[wireName];
-				else
-					netCap = {};
+				var netCap = caps[wireName] || {};
 
 				wires[wireName] = {
 					name: wireName,
@@ -255,19 +247,16 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 
 	for(var key in cells){
 		if(cells[key].isFF()){
-			if(typeof skews[key] === 'undefined')
-				cells[key].clock_skew = 0;
-			else
-				cells[key].clock_skew = skews[key];
+			cells[key].clock_skew = skews[key] || 0;
 		}
 	}
 
 	
 	/****Connecting Extracted Gates****/
 	for(var key in wires){
-		if(wires[key] != undefined && wires[key].type !== 'dummy_wire')
+		if((key in wires) && wires[key].type !== 'dummy_wire')
 			for(var i = 0; i < wires[key].outputs.length; i++){
-				if(Object.keys(wires[key].input).length === 0 || typeof(wires[key].outputs[i]) === undefined || Object.keys(wires[key].outputs[i]).length === 0){
+				if(Object.keys(wires[key].input).length === 0 || typeof(wires[key].outputs[i]) === 'undefined' || Object.keys(wires[key].outputs[i]).length === 0){
 					console.log('Flying wire ' + key);
 					warnings.push('Flying wire ' + key);
 				}else{

@@ -2,7 +2,9 @@
 
 var Cell = require('./cell').cell;
 var Connect = require('./cell').connect;
+var clone = require('./cell').clone;
 var TemplateCell = require('./cell').templateCell;
+
 
 var TPS = require('./thinplate/thinplate');
 
@@ -149,7 +151,7 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 			if (typeof value === 'string')
 				value = parseFloat(value);
 
-			if(typeof this.table[row] === 'undefined' || typeof this.table[row][column] === 'undefined'){
+			if(!(row in this.table) || !(column in this.table[row])){
 				console.log('No axis value!');
 			}else{
 				this.table[row][column] = value;
@@ -184,7 +186,7 @@ var Table = function(var1, var1Data, var2, var2Data){ //Data table constructor.
 			if (typeof value === 'string')
 				value = parseFloat(value);
 
-			if(typeof this.table[column] === 'undefined'){
+			if(!(column in this.table)){
 				console.log('No axis value!');
 			}else{
 				this.table[column] = value;
@@ -270,7 +272,7 @@ function extractScope(data, scopeName, openBracket, closeBracket){ //Extracting 
 			searchPos++;
 		}
 		if(bracketsCount != 0){
-			console.log('Unmatched bracket');
+			console.log('Unmatched bracket.');
 			result.found = false;
 			return result;
 		}else{
@@ -320,7 +322,7 @@ function extractAnyScope(data, openBracket, closeBracket){ //Extracting scope co
 			searchPos++;
 		}
 		if(bracketsCount != 0){
-			console.log('Unmatched bracket');
+			console.log('Unmatched bracket.');
 			result.found = false;
 			return result;
 		}else{
@@ -508,8 +510,8 @@ function parseCell(cellDefinition, templates){
 
 	var pinScope = {};
 	while((pinScope = extractScope(cellDefinition, 'pin')).found){
-		if(typeof newCell['pins'] === 'undefined')
-			newCell['pins'] = {};
+
+		newCell['pins'] = newCell['pins'] || {};
 		var pinDef = pinScope.content;
 		var pinName = pinScope.scopeParams;
 		newCell.pins[pinName] = {name: pinName};
@@ -519,8 +521,7 @@ function parseCell(cellDefinition, templates){
 		var timingScope = {};
 
 		while((timingScope = extractScope(pinDef, 'timing')).found){
-			if(typeof newCell.pins[pinName].timing === 'undefined')
-				newCell.pins[pinName].timing = {};
+			newCell.pins[pinName].timing = newCell.pins[pinName].timing || {};
 			var timingContent = timingScope.content;
 			var relatedPinRegex = getAttributeRegex('related_pin');
 			var relatedPin = 'any';
@@ -534,11 +535,10 @@ function parseCell(cellDefinition, templates){
 			var table = parseTableObject(timingContent, templates);
 			if(newCell.is_ff && pinName == newCell.ff['next_state']){
 
-				if(typeof table.timing_type !== 'undefined'){
+				if('timing_type' in table){
 					newCell[table.timing_type] = table;
-					if(typeof newCell.pins[pinName].timing[relatedPin] === 'undefined')
-							newCell.pins[pinName].timing[relatedPin] = {};
-						newCell.pins[pinName].timing[relatedPin][table.timing_type] = table;
+					newCell.pins[pinName].timing[relatedPin] = newCell.pins[pinName].timing[relatedPin] || {};
+					newCell.pins[pinName].timing[relatedPin][table.timing_type] = table;
 				}else{
 					console.log('Undefined timing type: ' + table);
 					newCell.pins[pinName].timing[relatedPin] = table[key];
@@ -551,8 +551,7 @@ function parseCell(cellDefinition, templates){
 
 		var powerScope = {};
 		while((powerScope = extractScope(pinDef, 'internal_power')).found){
-			if(typeof newCell.pins[pinName].internal_power === 'undefined')
-				newCell.pins[pinName].internal_power = {};
+			newCell.pins[pinName].internal_power = newCell.pins[pinName].internal_power || {};
 			var powerContent = powerScope.content;
 			var relatedPinRegex = getAttributeRegex('related_pin');
 			var relatedPin = 'any';
@@ -643,44 +642,6 @@ module.exports.parse = function(content, callback){
 		content = content.replace(getFunctionRegex('capacitive_load_unit'), '');
 	}
 
-	var attrsRegexs = { //Attributes regular expressions.
-		delay_model: getAttributeRegex('delay_model'),
-		in_place_swap_mode: getAttributeRegex('in_place_swap_mode'),
-		time_unit: getAttributeRegex('time_unit'),
-		voltage_unit: getAttributeRegex('voltage_unit'),
-		pulling_resistance_unit: getAttributeRegex('pulling_resistance_unit'),
-		leakage_power_unit: getAttributeRegex('leakage_power_unit'),
-		current_unit: getAttributeRegex('current_unit'),
-		slew_upper_threshold_pct_rise: getAttributeRegex('slew_upper_threshold_pct_rise'),
-		slew_lower_threshold_pct_rise: getAttributeRegex('slew_lower_threshold_pct_rise'),
-		slew_upper_threshold_pct_fall: getAttributeRegex('slew_upper_threshold_pct_fall'),
-		slew_lower_threshold_pct_fall: getAttributeRegex('slew_lower_threshold_pct_fall'),
-		input_threshold_pct_rise: getAttributeRegex('input_threshold_pct_rise'),
-		input_threshold_pct_fall: getAttributeRegex('input_threshold_pct_fall'),
-		output_threshold_pct_rise: getAttributeRegex('output_threshold_pct_rise'),
-		output_threshold_pct_fall: getAttributeRegex('output_threshold_pct_fall'),
-		nom_process: getAttributeRegex('nom_process'),
-		nom_voltage: getAttributeRegex('nom_voltage'),
-		nom_temperature: getAttributeRegex('nom_temperature'),
-		default_operating_conditions: getAttributeRegex('default_operating_conditions')
-	};
-
-
-	/*****Parsing general attributes*****/
-	for(var key in attrsRegexs){ 
-		if(attrsRegexs[key].test(content)){
-			var extracted = attrsRegexs[key].exec(content)[1];
-			content = content.replace(attrsRegexs[key], '');
-			if (getNumberRegex().test(extracted))
-				library[key] = parseFloat(extracted);
-			else if (getQuotedRegex().test(extracted))
-				library[key] = getQuotedRegex().exec(extracted)[1];
-			else
-				library[key] = extracted
-		}
-	}
-
-
 	/*****Parsing operating conditions*****/
 	library.operating_conditions = {};
 	var operatingConditionsScope;
@@ -704,20 +665,25 @@ module.exports.parse = function(content, callback){
 	library.cells['gnd'] = { pins: {'A': {name: 'A', direction: 'input'}, 'Y': {name: 'Y', direction: 'output'}}, is_ff: false, is_latch: false, is_dummy: true, is_input: true, is_output: false, is_vdd: false, is_gnd: true};
 	
 
+	/*****Parsing general attributes*****/
+	var libraryAttrs = extractAttributes(content);
+	for(var key in libraryAttrs)
+		library[key] = libraryAttrs[key];
+
+
+	/*****Handling sizing*****/
 	library.sizing = {};
 
 	for(var key in library.cells){
 		var cellBaseName = library.cells[key].basenameX;
 		var cellSize = library.cells[key].size;
-		if(typeof library.sizing[cellBaseName] === 'undefined')
-			library.sizing[cellBaseName] = {};
+		library.sizing[cellBaseName] = library.sizing[cellBaseName] || {};
 		library.sizing[cellBaseName][cellSize] = library.cells[key];
 	}
 
 	for(var key in library.cells){
 		var cellBaseName = library.cells[key].basenameX;
-		if(typeof library.cells[key].available_sizes === 'undefined')
-			library.cells[key].available_sizes = [];
+		library.cells[key].available_sizes = library.cells[key].available_sizes || [];
 		for (var sizeKey in library.sizing[cellBaseName])
 			if(library.cells[key].available_sizes.indexOf(sizeKey) == -1)
 				library.cells[key].available_sizes.push(parseInt(sizeKey));
