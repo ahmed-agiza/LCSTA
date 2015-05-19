@@ -531,22 +531,22 @@ function parseCell(cellDefinition, templates){
 				timingContent = timingContent.replace(relatedPinRegex, '');
 			}
 				
-				var table = parseTableObject(timingContent, templates);
-				if(newCell.is_ff && pinName == newCell.ff['next_state']){
+			var table = parseTableObject(timingContent, templates);
+			if(newCell.is_ff && pinName == newCell.ff['next_state']){
 
-					if(typeof table.timing_type !== 'undefined'){
-						newCell[table.timing_type] = table;
-						if(typeof newCell.pins[pinName].timing[relatedPin] === 'undefined')
-								newCell.pins[pinName].timing[relatedPin] = {};
-
+				if(typeof table.timing_type !== 'undefined'){
+					newCell[table.timing_type] = table;
+					if(typeof newCell.pins[pinName].timing[relatedPin] === 'undefined')
+							newCell.pins[pinName].timing[relatedPin] = {};
 						newCell.pins[pinName].timing[relatedPin][table.timing_type] = table;
-					}else{
-						console.log('Undefined timing type: ' + table);
-						newCell.pins[pinName].timing[relatedPin] = table[key];
-					}
-				}else
-					newCell.pins[pinName].timing[relatedPin] = table;
-				pinDef = timingScope.slicedData;
+				}else{
+					console.log('Undefined timing type: ' + table);
+					newCell.pins[pinName].timing[relatedPin] = table[key];
+				}
+			}else
+				newCell.pins[pinName].timing[relatedPin] = table;
+				
+			pinDef = timingScope.slicedData;
 		}
 
 		var powerScope = {};

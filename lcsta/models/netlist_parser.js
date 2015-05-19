@@ -252,6 +252,16 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 			wires[key] = undefined;
 		}
 	}
+
+	for(var key in cells){
+		if(cells[key].isFF()){
+			if(typeof skews[key] === 'undefined')
+				cells[key].clock_skew = 0;
+			else
+				cells[key].clock_skew = skews[key];
+		}
+	}
+
 	
 	/****Connecting Extracted Gates****/
 	for(var key in wires){

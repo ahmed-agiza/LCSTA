@@ -123,7 +123,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 		    	LibertyParser.parse(stdcellData, function(err, stdcells){
 		    		if(err){
 		    			console.log(err);
-		    			req.flash('error', 'Error while parsing the standard cell file.');
+		    			req.flash('error', err);
 		        		res.redirect('/');
 		        		fs.unlink(stdcellPath); //Deleting uploaded file.
 		        		fs.unlink(netlistPath);
@@ -148,7 +148,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 				    			CapParser.parse(capData, function(err, caps){
 				    				if(err){
 						    			console.log(err);
-						    			req.flash('error', 'Error while paarsing the net capacitances file.');
+						    			req.flash('error', err);
 						        		res.redirect('/');
 						        		fs.unlink(stdcellPath); //Deleting uploaded file.
 								        fs.unlink(netlistPath);
@@ -172,7 +172,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								        		ClockParser.parse(clkData, function(err, skews){
 								        			if(err){
 								        				console.log(err);
-										    			req.flash('error', 'Error while parsing the clock skews file.');
+										    			req.flash('error', err);
 										        		res.redirect('/');
 										        		fs.unlink(stdcellPath); //Deleting uploaded file.
 												        fs.unlink(netlistPath);
@@ -196,7 +196,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								        						ConstraintsParser.parse(constrData, function(err, constr){
 								        							if(err){
 								        								console.log(err);
-																        req.flash('error', 'Error while parsing the constraints file.');
+																        req.flash('error', err);
 																        res.redirect('/');
 																        fs.unlink(stdcellPath); //Deleting uploaded file.
 																		fs.unlink(netlistPath);
@@ -220,7 +220,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 												        						VerilogParser.parse(netlistData, stdcells, caps, skews, function(err, warnings, cells, wires){
 												        							if(err){
 														        						console.log(err);
-																		    			req.flash('error', 'Error while parsing the netlist file.');
+																		    			req.flash('error', err);
 																		        		res.redirect('/');
 																		        		fs.unlink(stdcellPath); //Deleting uploaded file.
 																				        fs.unlink(netlistPath);

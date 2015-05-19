@@ -66,10 +66,15 @@ app.use(multer({
     );
 app.use('/', routes);
 
-//Emptying the temp directory
+//Emptying the temp directories
 var trashEntries = fs.readdirSync('./temp_uploads');
 for(var i = 0; i < trashEntries.length; i++){
     fs.unlink('./temp_uploads/' + trashEntries[i]);
+}
+
+var trashEntries = fs.readdirSync('./empty_temp');
+for(var i = 0; i < trashEntries.length; i++){
+    fs.unlink('./empty_temp/' + trashEntries[i]);
 }
 
 
