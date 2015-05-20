@@ -217,7 +217,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
 														        						StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
 														        						StaticTimingAnalyser.requiredTimeCalculation(); // RAT evaluation
-														        						StaticTimingAnalyser.calculateSlack(); // Slack evaluation
+														        						StaticTimingAnalyser.calculateSetupSlack(); // Setup slack evaluation
+														        						StaticTimingAnalyser.calculateHoldSlack(); // Hold slack evaluation
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!

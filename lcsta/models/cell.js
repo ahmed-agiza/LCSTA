@@ -62,6 +62,7 @@ module.exports.cell = function(instanceName, libDef, libRef, cb){
 	this.slack_FF_start = 0; // For starting FF
 	this.clock_skew; // Clock skew: Used for FF only
 	this.isClock = false; // Is the node the clock pin
+	this.hold_slack = 0; // Hold slack: Used for FF only
 
 	this.setup = { // Setup time: Used for FF only
 		max: -1,

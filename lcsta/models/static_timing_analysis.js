@@ -50,12 +50,21 @@ var STA = function(gates, constraints){
 		}
 	};
 
-	this.calculateSlack = function(){
+	this.calculateSetupSlack = function(){ // Calculate the setup slack
 		for(var i=1; i<this.gates.length; i++){
 			if(this.gates[i].isFF()){
 				this.gates[i].slack_FF_start = this.gates[i].RAT_FF_start - this.gates[i].AAT_FF_start;
 			}
 			this.gates[i].slack = this.gates[i].RAT - this.gates[i].AAT_max;
+		}
+	};
+
+	this.calculateHoldSlack = function(){ // Evaluate the hold slack at the FFs
+		for(var i=1; i<this.gates.length; i++){
+			if(this.gates[i].isFF()){
+				// Note: The hold values are already negated in the liberty file so we add them here
+				this.gates[i].hold_slack = this.gates[i].AAT_min + this.gates[i].hold.max - this.gates[i].clock_skew;
+			}
 		}
 
 		for(var i=1; i<this.forward_ordering.length; i++){
@@ -65,14 +74,17 @@ var STA = function(gates, constraints){
 			console.log("Capacitance Load " + this.gates[this.forward_ordering[i]].capacitance_load.max + ", " + this.gates[this.forward_ordering[i]].capacitance_load.min);
 			console.log("Gate Delay " + this.gates[this.forward_ordering[i]].gate_delay.max + ", " + this.gates[this.forward_ordering[i]].gate_delay.min);
 			console.log("Max AAT " + this.gates[this.forward_ordering[i]].AAT_max);
+			console.log("Min AAT " + this.gates[this.forward_ordering[i]].AAT_min);
 			if(this.gates[this.forward_ordering[i]].isFF())
 				console.log("Starting AAT " + this.gates[this.forward_ordering[i]].AAT_FF_start);
 			console.log("RAT " + this.gates[this.forward_ordering[i]].RAT);
 			if(this.gates[this.forward_ordering[i]].isFF())
 				console.log("Starting RAT " + this.gates[this.forward_ordering[i]].RAT_FF_start);
-			console.log("Slack " + this.gates[this.forward_ordering[i]].slack);
+			console.log("Setup Slack " + this.gates[this.forward_ordering[i]].slack);
 			if(this.gates[this.forward_ordering[i]].isFF())
-				console.log("Starting Slack " + this.gates[this.forward_ordering[i]].slack_FF_start);
+				console.log("Starting Setup Slack " + this.gates[this.forward_ordering[i]].slack_FF_start);
+			if(this.gates[this.forward_ordering[i]].isFF())
+				console.log("Hold Slack " + this.gates[this.forward_ordering[i]].hold_slack);
 			console.log("------------------");
 		}
 	};
@@ -261,6 +273,8 @@ var STA = function(gates, constraints){
 		var cell_rise_min, cell_fall_min;
 		var setup_rise_max, setup_rise_min;
 		var setup_fall_max, setup_fall_min;
+		var hold_rise_max, hold_rise_min;
+		var hold_fall_max, hold_fall_min;
 		var new_max = false;
 		var new_min = false;
 
@@ -423,7 +437,16 @@ var STA = function(gates, constraints){
 
 				setup_rise_min = child["setup_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
 				setup_fall_min = child["setup_rising"].fall_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				child.setup.min = Math.max(setup_rise_min, setup_fall_min);				
+				child.setup.min = Math.min(setup_rise_min, setup_fall_min);
+
+				// Hold time
+				hold_rise_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				hold_fall_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.hold.max = Math.max(hold_rise_max, hold_fall_max);
+
+				hold_rise_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				hold_fall_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.hold.min = Math.min(hold_rise_min, hold_fall_min);
 			}
 			// ------------------------------------
 
@@ -431,6 +454,7 @@ var STA = function(gates, constraints){
 			// Input pin
 			if(child.is_input){
 				child.AAT_max = 0; // Max AAT = 0
+				child.AAT_min = 0;
 			}
 
 			// Starting FF
@@ -440,18 +464,26 @@ var STA = function(gates, constraints){
 
 			// Ending FF
 			else if(child.isFF()){
-				if(parent.isFF()) // If parent is a FF
+				if(parent.isFF()){ // If parent is a FF
 					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.setup.max);
-				else
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
+				}
+				else{
 					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.setup.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
+				}
 			}
 
 			// Normal handling
 			else{
-				if(parent.isFF()) // If parent is a FF
+				if(parent.isFF()){ // If parent is a FF
 					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max);
-				else
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
+				}
+				else{
 					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
+				}
 			}
 			// ------------------------------------
 		}	
