@@ -1,3 +1,5 @@
+'use strict';
+
 var Cell = require('./cell');
 
 var STA = function(gates, constraints){ // Constructor

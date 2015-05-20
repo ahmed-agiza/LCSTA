@@ -1,11 +1,10 @@
-"use strict";
+'use strict';
 
 var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
 var flash = require('connect-flash');
 var router = express.Router();
-
 
 var VerilogParser = require('../models/netlist_parser');
 var LibertyParser = require('../models/liberty_parser');
@@ -17,23 +16,10 @@ var Connect = require('../models/cell').connect;
 var TemplateCell = require('../models/cell').templateCell;
 var STA = require('../models/static_timing_analysis');
 
-
-function countArray(obj){ //Key-value array size counter.
-	var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-}
-
-function getKey(object, value){
-    for( var prop in object) {
-        if(object.hasOwnProperty(prop)) {
-             if( object[prop] === value )
-                 return prop;
-        }
-    }
-}
+function toTitleCase(str){
+	var title = require('to-title-case');
+	return title(str.replace(/_/gm, ' '));
+};
 
 router.get('/', function(req, res){ //File upload view.
 	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});

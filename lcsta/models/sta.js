@@ -1,3 +1,5 @@
+'use strict';
+
 var Cell = require('./cell');
 
 var STA = function(gates, constriants, net_capacitances, clock_skews){

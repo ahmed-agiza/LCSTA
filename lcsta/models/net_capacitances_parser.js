@@ -1,3 +1,4 @@
+'use strict';
 
 module.exports.parse = function(data, callback){
 	var parsed;

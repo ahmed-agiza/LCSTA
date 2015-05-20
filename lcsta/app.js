@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var express = require('express');
 var flash = require('express-flash');
@@ -17,10 +17,10 @@ var routes = require('./routes/index');
 var app = express();
 app.use(favicon(__dirname + '/public/images/favicon.ico'));
 
-app.set('trust proxy', 1) // trust first proxy 
+app.set('trust proxy', 1); // trust first proxy 
 app.use(session({
   secret: 'y9MXWKNiSKr3kdDACxNiSKr3kdDVPKACxNi'
-}))
+}));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -72,7 +72,7 @@ for(var i = 0; i < trashEntries.length; i++){
     fs.unlink('./temp_uploads/' + trashEntries[i]);
 }
 
-var trashEntries = fs.readdirSync('./empty_temp');
+trashEntries = fs.readdirSync('./empty_temp');
 for(var i = 0; i < trashEntries.length; i++){
     fs.unlink('./empty_temp/' + trashEntries[i]);
 }
