@@ -3,16 +3,14 @@
 var Cell = require("./cell");
 
 var STA = function(gates, constraints){
-
-	this.arrivalTimeCalculation = function(){ // Calculate arrival time
-		this._topologicalSorting(true); // Forward topological sorting for the graph
+	this.arrivalTimeCalculation = function(){
+		this._topologicalSorting(true); // Forward topological sorting of the graph
 
 		var current;
 		var current_index;
 		var child;
 		var child_index;
 		var input_port;
-		var start_flag;
 
 		for(var i=0; i<this.forward_ordering.length; i++){
 			current_index = this.forward_ordering[i];
@@ -21,32 +19,30 @@ var STA = function(gates, constraints){
 				child_index = this.timing_graph[current_index].children[j].gate;
 				child = this.gates[child_index];
 				input_port = this.timing_graph[current_index].children[j].port;
-				start_flag = (current_index == 0);
 
-				this._updateValues(current, child, child_index, input_port, start_flag); // Update the values on the nodes
+				this._updateValues(current, child, child_index, input_port); // Update the values on the nodes
 			}
 		}
 	};
 
-	this.requiredTimeCalculation = function(){ // Calculate required time
+	this.requiredTimeCalculation = function(){
 		this._topologicalSorting(false); // Topological sorting for backward traversal
 
 		var current;
 		var current_index;
 		var child;
 		var child_index;
-		var start_flag;
+
 		for(var i=0; i<this.backward_ordering.length; i++){
-			current_index = this.backward_ordering[i].gate;
+			current_index = this.backward_ordering[i];
 			current = this.gates[current_index];
-			start_flag = this.backward_ordering[i].starting;
 			for(var j=0; j<this.timing_graph[current_index].parents.length; j++){
 				child_index = this.timing_graph[current_index].parents[j];
 				child = this.gates[child_index];
 				if(child_index == 0) continue;
 
-				this._evaluateRequiredTime(current, child, start_flag); // Evaluate the required time for the nodes
-			}
+				this._evaluateRequiredTime(current, child);
+			}	
 		}
 	};
 
@@ -67,25 +63,24 @@ var STA = function(gates, constraints){
 			}
 		}
 
-		for(var i=1; i<this.forward_ordering.length; i++){
-			console.log(i + " " + this.gates[this.forward_ordering[i]].instanceName);
-			console.log("Input Slew " + this.gates[this.forward_ordering[i]].input_slew.max + ", " + this.gates[this.forward_ordering[i]].input_slew.min);
-			console.log("Output Slew " + this.gates[this.forward_ordering[i]].output_slew.max + ", " + this.gates[this.forward_ordering[i]].output_slew.min);
-			console.log("Capacitance Load " + this.gates[this.forward_ordering[i]].capacitance_load.max + ", " + this.gates[this.forward_ordering[i]].capacitance_load.min);
-			console.log("Gate Delay " + this.gates[this.forward_ordering[i]].gate_delay.max + ", " + this.gates[this.forward_ordering[i]].gate_delay.min);
-			console.log("Max AAT " + this.gates[this.forward_ordering[i]].AAT_max);
-			console.log("Min AAT " + this.gates[this.forward_ordering[i]].AAT_min);
-			if(this.gates[this.forward_ordering[i]].isFF())
-				console.log("Starting AAT " + this.gates[this.forward_ordering[i]].AAT_FF_start);
-			console.log("RAT " + this.gates[this.forward_ordering[i]].RAT);
-			if(this.gates[this.forward_ordering[i]].isFF())
-				console.log("Starting RAT " + this.gates[this.forward_ordering[i]].RAT_FF_start);
-			console.log("Setup Slack " + this.gates[this.forward_ordering[i]].slack);
-			if(this.gates[this.forward_ordering[i]].isFF())
-				console.log("Starting Setup Slack " + this.gates[this.forward_ordering[i]].slack_FF_start);
-			if(this.gates[this.forward_ordering[i]].isFF())
-				console.log("Hold Slack " + this.gates[this.forward_ordering[i]].hold_slack);
-			console.log("------------------");
+		for(var i=1; i<this.gates.length; i++){
+			console.log(this.gates[i].instanceName);
+			console.log("Input Slew " + this.gates[i].input_slew.max + ", " + this.gates[i].input_slew.min);
+			console.log("Output Slew " + this.gates[i].output_slew.max + ", " + this.gates[i].output_slew.min);
+			console.log("Capacitance Load " + this.gates[i].capacitance_load.max + ", " + this.gates[i].capacitance_load.min);
+			console.log("Gate Delay " + this.gates[i].gate_delay.max + ", " + this.gates[i].gate_delay.min);
+			console.log("Min AAT " + this.gates[i].AAT_min);
+			console.log("Max AAT " + this.gates[i].AAT_max);
+			console.log("RAT " + this.gates[i].RAT);
+			console.log("Setup Slack " + this.gates[i].slack);
+			if(this.gates[i].isFF()){
+				console.log("Hold Slack " + this.gates[i].hold_slack);
+				console.log("Starting AAT " + this.gates[i].AAT_FF_start);
+				console.log("Starting RAT " + this.gates[i].RAT_FF_start);
+				console.log("Starting Setup Slack " + this.gates[i].slack_FF_start);
+				console.log("Setup " + this.gates[i].setup.max + ", " + this.gates[i].setup.min);
+				console.log("Hold " + this.gates[i].hold.max + ", " + this.gates[i].hold.min);
+			}
 		}
 	};
 
@@ -157,27 +152,11 @@ var STA = function(gates, constraints){
 		var starting = new Array();
 		var current;
 		var child_index;
+		var child;
 		var element_index;
+		var origin_index;
 
 		if(forward){ // Topological sorting for the forward traversal
-			starting.push(0); // Push the Origin node
-			while(starting.length > 0){
-				current = starting[0];
-				starting.splice(0,1); // remove the first element
-				this.forward_ordering.push(current);
-				for(var i=0; i<temp_timing_graph[current].children.length; i++){ // Go over children
-					child_index = temp_timing_graph[current].children[i].gate;
-					element_index = temp_timing_graph[child_index].parents.indexOf(current); // Find the edge from child to parent
-					temp_timing_graph[child_index].parents.splice(element_index, 1); // Remove the edge
-
-					if(temp_timing_graph[child_index].parents.length == 0) // No more incoming edges
-						starting.push(child_index);
-				}
-			}
-		}
-		else{ // Topological sorting for the reverse traversal
-			var child_index;
-			var origin_index;
 			for(var i=0; i<temp_timing_graph[0].children.length; i++){ // Remove origin connections
 				child_index = temp_timing_graph[0].children[i].gate;
 				temp_timing_graph[0].children.splice(i, 1);
@@ -186,26 +165,54 @@ var STA = function(gates, constraints){
 				i--;
 			}
 
-			for(var i=1; i<this.gates.length; i++){
-				if(this.gates[i].is_output || this.gates[i].isFF()){ // If it is an ending node
-					starting.push({
-						gate: i,
-						starting: true
-					});
+			for(var i=1; i<this.gates.length; i++)
+				if(this.gates[i].is_input || this.gates[i].isFF()) // If it is an starting node
+					starting.push(i);
+
+			while(starting.length > 0){
+				current = starting[0];
+				starting.splice(0,1); // remove the first element
+				this.forward_ordering.push(current);
+				for(var i=0; i<temp_timing_graph[current].children.length; i++){ // Go over children
+					child_index = temp_timing_graph[current].children[i].gate;
+					child = this.gates[child_index];
+					element_index = temp_timing_graph[child_index].parents.indexOf(current); // Find the edge from child to parent
+					temp_timing_graph[child_index].parents.splice(element_index, 1); // Remove the edge
+					temp_timing_graph[current].children.splice(i, 1); // Remove child
+					i--;
+
+					if(temp_timing_graph[child_index].parents.length == 0) // No more incoming edges
+						if(!child.isFF()) // Don't take ending FF as they will be covered in the analysis
+							starting.push(child_index);
 				}
 			}
+		}
+		else{ // Topological sorting for the reverse traversal
+			for(var i=0; i<temp_timing_graph[0].children.length; i++){ // Remove origin connections
+				child_index = temp_timing_graph[0].children[i].gate;
+				temp_timing_graph[0].children.splice(i, 1);
+				origin_index = temp_timing_graph[child_index].parents.indexOf(0);
+				temp_timing_graph[child_index].parents.splice(origin_index, 1); // Remove origin
+				i--;
+			}
+
+			for(var i=1; i<this.gates.length; i++)
+				if(this.gates[i].is_output || this.gates[i].isFF()) // If it is an ending node
+					starting.push(i);
+
 			while(starting.length > 0){
 				current = starting[0];
 				starting.splice(0, 1); // remove the first element
 				this.backward_ordering.push(current);
-				for(var i=0; i<temp_timing_graph[current.gate].parents.length; i++){ // Go over parents
+				for(var i=0; i<temp_timing_graph[current].parents.length; i++){ // Go over parents
 					// Needed to avoid cycling into the parents of the FF as it is modelled as 2 nodes
-					child_index = temp_timing_graph[current.gate].parents[i];
-					temp_timing_graph[current.gate].parents.splice(i, 1);
+					child_index = temp_timing_graph[current].parents[i];
+					child = this.gates[child_index];
+					temp_timing_graph[current].parents.splice(i, 1);
 					i--;
 					//
 					for(var j=0; j<temp_timing_graph[child_index].children.length; j++){ // Find the edge from parent to child
-						if(temp_timing_graph[child_index].children[j].gate == current.gate){
+						if(temp_timing_graph[child_index].children[j].gate == current){
 							element_index = j;
 							break;
 						}
@@ -213,12 +220,231 @@ var STA = function(gates, constraints){
 					temp_timing_graph[child_index].children.splice(element_index, 1); // Remove the edge
 
 					if(temp_timing_graph[child_index].children.length == 0) // No more incoming edges
-						starting.push({
-							gate: child_index,
-							starting: false
-						});
+						if(!child.isFF()) // Don't take ending FF as they will be covered in the analysis
+							starting.push(child_index);
 				}
 			}
+		}
+	};
+
+	this._updateValues = function(parent, child, child_index, input_port){ // Update the values for the node
+		this._evaluateCapacitanceLoad(child, child_index); // Evaluate capacitance for the node
+
+		var timing_tables;
+		var clock_port;
+		var input_slew;
+		var input_delay;
+		var output_delay;
+		var rise_transition_max, rise_transition_min;
+		var fall_transition_max, fall_transition_min;
+		var cell_rise_max, cell_fall_max;
+		var cell_rise_min, cell_fall_min;
+		var setup_rise_max, setup_rise_min;
+		var setup_fall_max, setup_fall_min;
+		var hold_rise_max, hold_rise_min;
+		var hold_fall_max, hold_fall_min;
+		var new_max = false;
+		var new_min = false;
+
+		// Evaluate the input pins
+		if(parent.is_input){
+			// Input slew
+			if(parent.instanceName in this.input_slew){
+				input_slew = this.input_slew[parent.instanceName];
+				parent.input_slew.max = Math.max(input_slew.rise_transition, input_slew.fall_transition);
+				parent.input_slew.min = Math.min(input_slew.rise_transition, input_slew.fall_transition);
+			}
+			else{
+				parent.input_slew.max = 0;
+				parent.input_slew.min = 0;
+			}
+
+			// Output slew
+			parent.output_slew.max = parent.input_slew.max;
+			parent.output_slew.min = parent.input_slew.min;
+
+			// Gate delay
+			if(parent.instanceName in this.input_delays){
+				input_delay = this.input_delays[parent.instanceName];
+				parent.gate_delay.max = Math.max(input_delay.cell_rise, input_delay.cell_fall);
+				parent.gate_delay.min = Math.min(input_delay.cell_rise, input_delay.cell_fall);
+			}
+			else{
+				parent.gate_delay.max = 0;
+				parent.gate_delay.min = 0;
+			}
+
+			// AAT
+			parent.AAT_max = 0; // Max AAT = 0
+			parent.AAT_min = 0;
+		}
+
+		// Evaluate starting FF
+		if(parent.isFF()){
+			for(var key in parent.outputPort){
+				// Input slew
+				parent.input_slew.max = this.clock_node.output_slew.max;
+				parent.input_slew.min = this.clock_node.output_slew.min;
+
+				//Output slew
+				for(var in_key in parent.inputPorts){ // Get the clock port
+					if(parent.inputPorts[in_key].clock){
+						clock_port = parent.inputPorts[in_key];
+						break;
+					}
+				}
+				timing_tables = parent.outputPort[key].timing[clock_port.name]; // Get the timing table with respect to the clock
+
+				rise_transition_max = timing_tables.rise_transition.getData(parent.input_slew.max, parent.capacitance_load.max);
+				fall_transition_max = timing_tables.fall_transition.getData(parent.input_slew.max, parent.capacitance_load.max);
+				parent.output_slew.max = Math.max(rise_transition_max, fall_transition_max);
+
+				rise_transition_min = timing_tables.rise_transition.getData(parent.input_slew.min, parent.capacitance_load.min);
+				fall_transition_min = timing_tables.fall_transition.getData(parent.input_slew.min, parent.capacitance_load.min);
+				parent.output_slew.min = Math.min(rise_transition_min, fall_transition_min);
+
+				// Gate delay
+				timing_tables = parent.outputPort[key].timing[clock_port.name]; // Get the timing table with respect to the clock
+
+				cell_rise_max = timing_tables.cell_rise.getData(this.clock_node.output_slew.max, parent.capacitance_load.max);
+				cell_fall_max = timing_tables.cell_fall.getData(this.clock_node.output_slew.max, parent.capacitance_load.max);
+				parent.gate_delay.max = Math.max(cell_rise_max, cell_fall_max);
+
+				cell_rise_min = timing_tables.cell_rise.getData(this.clock_node.output_slew.min, parent.capacitance_load.min);
+				cell_fall_min = timing_tables.cell_fall.getData(this.clock_node.output_slew.min, parent.capacitance_load.min); 
+				parent.gate_delay.min = Math.max(cell_rise_min, cell_fall_min);
+
+				// AAT
+				parent.AAT_FF_start = parent.clock_skew; // AAT = clock skew
+			}
+		}
+
+		if(child.is_output){ // Handled separately since the output pin doesn't have output ports
+			// Input slew
+			child.input_slew.max = parent.output_slew.max;
+			child.input_slew.min = parent.output_slew.min;
+
+			// Output slew
+			child.output_slew.max = child.input_slew.max;
+			child.output_slew.min = child.input_slew.min;
+
+			// Gate delay
+			if(child.instanceName in this.output_delays){
+				output_delay = this.output_delays[child.instanceName];
+				child.gate_delay.max = Math.max(output_delay.cell_rise, output_delay.cell_fall);
+				child.gate_delay.min = Math.min(output_delay.cell_rise, output_delay.cell_fall);
+			}
+			else{
+				child.gate_delay.max = 0;
+				child.gate_delay.min = 0;
+			}
+
+			// AAT
+			if(parent.isFF()) // If parent is a FF
+				child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.gate_delay.max);
+			else
+				child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.gate_delay.max);
+			return;
+		}
+
+		for(var key in child.outputPort){ // Most cases it is a single output port
+			if(!(child.is_input || child.isFF())) // Input pins have no timing tables
+				timing_tables = child.outputPort[key].timing[input_port.name];
+
+			// Setup and Hold
+			if(child.isFF()){
+				// Setup time
+				setup_rise_max = child["setup_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				setup_fall_max = child["setup_rising"].fall_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.setup.max = Math.max(setup_rise_max, setup_fall_max);
+
+				setup_rise_min = child["setup_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				setup_fall_min = child["setup_rising"].fall_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.setup.min = Math.min(setup_rise_min, setup_fall_min);
+
+				// Hold time
+				hold_rise_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				hold_fall_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.hold.max = Math.max(hold_rise_max, hold_fall_max);
+
+				hold_rise_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				hold_fall_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
+				child.hold.min = Math.min(hold_rise_min, hold_fall_min);
+
+				// AAT
+				if(parent.isFF()){ // If parent is a FF
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.setup.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
+				}
+				else{
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.setup.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
+				}
+			}
+			else{ // Normal handling
+				// Input slew
+				if(parent.output_slew.max > child.input_slew.max){ // If the maximum input slew rate is a new maximum
+					child.input_slew.max = parent.output_slew.max;
+					new_max = true;
+				}
+				if(parent.output_slew.min < child.input_slew.min){ // If the minimum input slew rate is a new minimum
+					child.input_slew.min = parent.output_slew.min;
+					new_min = true;
+				}
+
+				// Output slew
+				if(new_max){
+					rise_transition_max = timing_tables.rise_transition.getData(child.input_slew.max, child.capacitance_load.max);
+					fall_transition_max = timing_tables.fall_transition.getData(child.input_slew.max, child.capacitance_load.max);
+					child.output_slew.max = Math.max(rise_transition_max, fall_transition_max);
+				}
+
+				if(new_min){
+					rise_transition_min = timing_tables.rise_transition.getData(child.input_slew.min, child.capacitance_load.min);
+					fall_transition_min = timing_tables.fall_transition.getData(child.input_slew.min, child.capacitance_load.min);
+					child.output_slew.min = Math.min(rise_transition_min, fall_transition_min);
+				}
+
+				// Gate delay
+				if(new_max){
+					cell_rise_max = timing_tables.cell_rise.getData(child.input_slew.max, child.capacitance_load.max);
+					cell_fall_max = timing_tables.cell_fall.getData(child.input_slew.max, child.capacitance_load.max);
+					child.gate_delay.max = Math.max(cell_rise_max, cell_fall_max);
+				}
+
+				if(new_min){
+					cell_rise_min = timing_tables.cell_rise.getData(child.input_slew.min, child.capacitance_load.min);
+					cell_fall_min = timing_tables.cell_fall.getData(child.input_slew.min, child.capacitance_load.min); 
+					child.gate_delay.min = Math.max(cell_rise_min, cell_fall_min);
+				}
+
+				// AAT
+				if(parent.isFF()){ // If parent is a FF
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
+				}
+				else{
+					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max);
+					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
+				}
+			}
+		}
+	};
+
+	this._evaluateRequiredTime = function(parent, child){ // Calculate RAT
+		// Evaluate the end nodes
+		if(parent.is_output){ // Output pin
+			parent.RAT = this.clock;
+		}
+		else if(parent.isFF()){ // Ending FF
+			parent.RAT = this.clock + parent.clock_skew;
+		}
+
+		if(child.isFF()){ // Starting FF
+			child.RAT_FF_start = Math.min(child.RAT_FF_start, parent.RAT - parent.gate_delay.max);
+		}
+		else{ // Normal handling
+			child.RAT = Math.min(child.RAT, parent.RAT - child.gate_delay.max);
 		}
 	};
 
@@ -257,253 +483,6 @@ var STA = function(gates, constraints){
 		}
 		this.calculated_capacitance[node_index] = true; // Mark as evaluated
 		// Got the total capacitance loading the gate
-	};
-
-	this._updateValues = function(parent, child, child_index, input_port, start_flag){ // Update the values for the node
-		this._evaluateCapacitanceLoad(child, child_index); // Evaluate capacitance for the node
-
-		var timing_tables;
-		var clock_port;
-		var input_slew;
-		var input_delay;
-		var output_delay;
-		var rise_transition_max, rise_transition_min;
-		var fall_transition_max, fall_transition_min;
-		var cell_rise_max, cell_fall_max;
-		var cell_rise_min, cell_fall_min;
-		var setup_rise_max, setup_rise_min;
-		var setup_fall_max, setup_fall_min;
-		var hold_rise_max, hold_rise_min;
-		var hold_fall_max, hold_fall_min;
-		var new_max = false;
-		var new_min = false;
-
-		if(child.is_output){ // Handled separately since the output pin doesn't have output ports
-			// Input slew
-			child.input_slew.max = parent.output_slew.max;
-			child.input_slew.min = parent.output_slew.min;
-
-			// Output slew
-			child.output_slew.max = child.input_slew.max;
-			child.output_slew.min = child.input_slew.min;
-
-			// Gate delay
-			if(child.instanceName in this.output_delays){
-				output_delay = this.output_delays[child.instanceName];
-				child.gate_delay.max = Math.max(output_delay.cell_rise, output_delay.cell_fall);
-				child.gate_delay.min = Math.min(output_delay.cell_rise, output_delay.cell_fall);
-			}
-			else{
-				child.gate_delay.max = 0;
-				child.gate_delay.min = 0;
-			}
-
-			// AAT
-			if(parent.isFF()) // If parent is a FF
-				child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.gate_delay.max);
-			else
-				child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.gate_delay.max);
-			return;
-		}
-
-		for(var key in child.outputPort){ // Most cases it is a single output port
-			if(!(child.is_input || child.isFF())) // Input pins have no timing tables
-				timing_tables = child.outputPort[key].timing[input_port.name];
-
-			// ------------ Input slew ------------
-			// Input pin
-			if(child.is_input){
-				if(child.instanceName in this.input_slew){
-					input_slew = this.input_slew[child.instanceName];
-					child.input_slew.max = Math.max(input_slew.rise_transition, input_slew.fall_transition);
-					child.input_slew.min = Math.min(input_slew.rise_transition, input_slew.fall_transition);
-				}
-				else{
-					child.input_slew.max = 0;
-					child.input_slew.min = 0;
-				}
-			}
-
-			// Starting FF
-			else if(child.isFF()){
-				child.input_slew.max = this.clock_node.output_slew.max;
-				child.input_slew.min = this.clock_node.output_slew.min;	
-			}
-
-			// Normal handling
-			else{
-				if(parent.output_slew.max > child.input_slew.max){ // If the maximum input slew rate is a new maximum
-					child.input_slew.max = parent.output_slew.max;
-					new_max = true;
-				}
-				if(parent.output_slew.min < child.input_slew.min){ // If the minimum input slew rate is a new minimum
-					child.input_slew.min = parent.output_slew.min;
-					new_min = true;
-				}
-			}
-			// ------------------------------------
-
-			// ------------ Output slew -----------
-			// Input pin
-			if(child.is_input){
-				child.output_slew.max = child.input_slew.max;
-				child.output_slew.min = child.input_slew.min;
-			}
-
-			// Starting FF
-			else if(child.isFF()){
-				for(var in_key in child.inputPorts){ // Get the clock port
-					if(child.inputPorts[in_key].clock){
-						clock_port = child.inputPorts[in_key];
-						break;
-					}
-				}
-				timing_tables = child.outputPort[key].timing[clock_port.name]; // Get the timing table with respect to the clock
-
-				rise_transition_max = timing_tables.rise_transition.getData(child.input_slew.max, child.capacitance_load.max);
-				fall_transition_max = timing_tables.fall_transition.getData(child.input_slew.max, child.capacitance_load.max);
-				child.output_slew.max = Math.max(rise_transition_max, fall_transition_max);
-
-				rise_transition_min = timing_tables.rise_transition.getData(child.input_slew.min, child.capacitance_load.min);
-				fall_transition_min = timing_tables.fall_transition.getData(child.input_slew.min, child.capacitance_load.min);
-				child.output_slew.min = Math.min(rise_transition_min, fall_transition_min);
-			}
-
-			// Normal handling
-			else{
-				if(new_max){
-					rise_transition_max = timing_tables.rise_transition.getData(child.input_slew.max, child.capacitance_load.max);
-					fall_transition_max = timing_tables.fall_transition.getData(child.input_slew.max, child.capacitance_load.max);
-					child.output_slew.max = Math.max(rise_transition_max, fall_transition_max);
-				}
-
-				if(new_min){
-					rise_transition_min = timing_tables.rise_transition.getData(child.input_slew.min, child.capacitance_load.min);
-					fall_transition_min = timing_tables.fall_transition.getData(child.input_slew.min, child.capacitance_load.min);
-					child.output_slew.min = Math.min(rise_transition_min, fall_transition_min);
-				}
-			}
-			// ------------------------------------	
-
-			// ------------ Gate delay ------------
-			// Input pin
-			if(child.is_input){
-				if(child.instanceName in this.input_delays){
-					input_delay = this.input_delays[child.instanceName];
-					child.gate_delay.max = Math.max(input_delay.cell_rise, input_delay.cell_fall);
-					child.gate_delay.min = Math.min(input_delay.cell_rise, input_delay.cell_fall);
-				}
-				else{
-					child.gate_delay.max = 0;
-					child.gate_delay.min = 0;
-				}
-			}
-
-			// Starting FF
-			else if(child.isFF()){
-				timing_tables = child.outputPort[key].timing[clock_port.name]; // Get the timing table with respect to the clock
-
-				cell_rise_max = timing_tables.cell_rise.getData(this.clock_node.output_slew.max, child.capacitance_load.max);
-				cell_fall_max = timing_tables.cell_fall.getData(this.clock_node.output_slew.max, child.capacitance_load.max);
-				child.gate_delay.max = Math.max(cell_rise_max, cell_fall_max);
-
-				cell_rise_min = timing_tables.cell_rise.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				cell_fall_min = timing_tables.cell_fall.getData(this.clock_node.output_slew.min, child.capacitance_load.min); 
-				child.gate_delay.min = Math.max(cell_rise_min, cell_fall_min);
-			}
-
-			// Normal handling
-			else{
-				if(new_max){
-					cell_rise_max = timing_tables.cell_rise.getData(child.input_slew.max, child.capacitance_load.max);
-					cell_fall_max = timing_tables.cell_fall.getData(child.input_slew.max, child.capacitance_load.max);
-					child.gate_delay.max = Math.max(cell_rise_max, cell_fall_max);
-				}
-
-				if(new_min){
-					cell_rise_min = timing_tables.cell_rise.getData(child.input_slew.min, child.capacitance_load.min);
-					cell_fall_min = timing_tables.cell_fall.getData(child.input_slew.min, child.capacitance_load.min); 
-					child.gate_delay.min = Math.max(cell_rise_min, cell_fall_min);
-				}
-			}
-			// ------------------------------------
-
-			// ---------- Setup and Hold ----------
-			if(child.isFF()){
-				// Setup time
-				setup_rise_max = child["setup_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				setup_fall_max = child["setup_rising"].fall_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				child.setup.max = Math.max(setup_rise_max, setup_fall_max);
-
-				setup_rise_min = child["setup_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				setup_fall_min = child["setup_rising"].fall_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				child.setup.min = Math.min(setup_rise_min, setup_fall_min);
-
-				// Hold time
-				hold_rise_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				hold_fall_max = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				child.hold.max = Math.max(hold_rise_max, hold_fall_max);
-
-				hold_rise_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				hold_fall_min = child["hold_rising"].rise_constraint.getData(this.clock_node.output_slew.min, child.capacitance_load.min);
-				child.hold.min = Math.min(hold_rise_min, hold_fall_min);
-			}
-			// ------------------------------------
-
-			// --------------- AAT ----------------
-			// Input pin
-			if(child.is_input){
-				child.AAT_max = 0; // Max AAT = 0
-				child.AAT_min = 0;
-			}
-
-			// Starting FF
-			else if(child.isFF() && start_flag){
-				child.AAT_FF_start = child.clock_skew; // AAT = clock skew
-			}
-
-			// Ending FF
-			else if(child.isFF()){
-				if(parent.isFF()){ // If parent is a FF
-					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max + child.setup.max);
-					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
-				}
-				else{
-					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max + child.setup.max);
-					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
-				}
-			}
-
-			// Normal handling
-			else{
-				if(parent.isFF()){ // If parent is a FF
-					child.AAT_max = Math.max(child.AAT_max, parent.AAT_FF_start + parent.gate_delay.max);
-					child.AAT_min = Math.min(child.AAT_min, parent.AAT_FF_start + parent.gate_delay.min);
-				}
-				else{
-					child.AAT_max = Math.max(child.AAT_max, parent.AAT_max + parent.gate_delay.max);
-					child.AAT_min = Math.min(child.AAT_min, parent.AAT_min + parent.gate_delay.min);
-				}
-			}
-			// ------------------------------------
-		}	
-	}
-
-	this._evaluateRequiredTime = function(parent, child, start_flag){ // Calculate RAT
-		// Evaluate the end nodes
-		if(parent.is_output){ // Output pin
-			parent.RAT = this.clock;
-		}
-		else if(parent.isFF() && start_flag){ // Ending FF
-			parent.RAT = this.clock + parent.clock_skew;
-		}
-
-		if(child.isFF()){ // Starting FF
-			child.RAT_FF_start = Math.min(child.RAT_FF_start, parent.RAT - parent.gate_delay.max);
-		}
-		else{ // Normal handling
-			child.RAT = Math.min(child.RAT, parent.RAT - child.gate_delay.max);
-		}
 	};
 
 	this._clone = function(obj){ // Cloning any type of object

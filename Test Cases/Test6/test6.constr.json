@@ -1,0 +1,47 @@
+{
+  "clock": 7,
+  "input_slew": {
+    "___input_clk": {
+      "rise_transition": 0.15,
+      "fall_transition": 0.04
+    },
+    "___input_a[0]": {
+      "rise_transition": 0.04,
+      "fall_transition": 0.02
+    },
+    "___input_a[1]": {
+      "rise_transition": 0.07,
+      "fall_transition": 0.06
+    },
+    "___input_a[2]": {
+      "rise_transition": 0.04,
+      "fall_transition": 0.1
+    }
+  },
+  "input_delays": {
+    "___input_a[0]": {
+      "cell_rise": 0.5,
+      "cell_fall": 0.3
+    },
+    "___input_a[1]": {
+      "cell_rise": 0.3,
+      "cell_fall": 0.4
+    },
+    "___input_a[2]": {
+      "cell_rise": 0.7,
+      "cell_fall": 0.4
+    }
+  },
+  "output_capacitance_load": {
+    "___output_b": {
+      "rise_capacitance": 0.4,
+      "fall_capacitance": 0.45
+    }
+  },
+  "output_delays": {
+    "___output_b": {
+      "cell_rise": 0.25,
+      "cell_fall": 0.5
+    }
+  }
+}
