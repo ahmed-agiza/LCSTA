@@ -22,7 +22,7 @@ function toTitleCase(str){
 };
 
 router.get('/', function(req, res){ //File upload view.
-	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error')});
+	res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error'), err_ver: false, err_std: false, err_time: false});
 });
 
 router.get('/about', function(req, res){ //About view.
@@ -43,10 +43,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 	var emptyCapPath = './empty_temp/empty.cap.json' + Date.now() + ('' + Math.random()).split('.')[1];
 	var emptyConstrPath = './empty_temp/empty.constr.json' + Date.now() + ('' + Math.random()).split('.')[1];
 
-	fs.writeFileSync(emptyClkPath, '{}');
-	fs.writeFileSync(emptyCapPath, '{}'); 
-	fs.writeFileSync(emptyConstrPath, '{}');
-
 	var netlistPath; //Netlist file path.
 	var stdcellPath; //Stdcell file path.
 	var clkPath; //Clock skews file path.
@@ -56,21 +52,27 @@ router.post('/report', function(req, res){ //Generate timing report.
 	if(typeof(req.files.netlist) === 'undefined'){
 		console.log('No netlist uploaded');
 		req.flash('error', 'Select a Verilog netlist file to process.');
-		res.redirect('/');
-		return;
+		return res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error'), err_ver: true, err_std: false, err_time: false});
 	}else
 		netlistPath = './' + req.files.netlist.path;
 
 	if(typeof(req.files.stdcell) === 'undefined'){
 		console.log('No standard cell file uploaded');
 		req.flash('error', 'Select a standard cell library file to process.');
-		res.redirect('/');
-		return;
+		return res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error'), err_ver: false, err_std: true, err_time: false});
 	}else
 		stdcellPath = './' + req.files.stdcell.path;
 
+	if(typeof(req.files.constr) === 'undefined'){
+		console.log('No timing constraints file uploaded');
+		req.flash('error', 'Select a timing constraints file to process.');
+		return res.render('index', {title: 'Logic Circuit Static Timing Analysis', message: req.flash('error'), err_ver: false, err_std: false, err_time: true});
+	}else
+		constrPath = './' + req.files.constr.path;
+
 	if(typeof(req.files.clk) === 'undefined'){
 		fileWarnings.push('No clock skews file uploaded, assuming empty file.');
+		fs.writeFileSync(emptyClkPath, '{}');
 		console.log('No clock skews file uploaded.');
 		clkPath = emptyClkPath;
 	}else
@@ -80,18 +82,14 @@ router.post('/report', function(req, res){ //Generate timing report.
 
 	if(typeof(req.files.cap) === 'undefined'){
 		fileWarnings.push('No net capacitances file uploaded, assuming empty file.');
+		fs.writeFileSync(emptyCapPath, '{}'); 
 		console.log('No net capacitances file uploaded.');
 		capPath = emptyCapPath;
 	}else
 		capPath = './' + req.files.cap.path; 
 
 
-	if(typeof(req.files.constr) === 'undefined'){
-		fileWarnings.push('No constraints file uploaded, assuming empty file.')
-		console.log('No constraints file uploaded.');
-		constrPath = emptyConstrPath;
-	}else
-		constrPath = './' + req.files.constr.path;
+
 
 	var unlinker = {
 		netlistPath: netlistPath,
