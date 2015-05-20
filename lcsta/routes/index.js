@@ -67,7 +67,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 		res.redirect('/');
 		return;
 	}else
-		stdcellPath = req.files.stdcell.path;
+		stdcellPath = './' + req.files.stdcell.path;
 
 	if(typeof(req.files.clk) === 'undefined'){
 		fileWarnings.push('No clock skews file uploaded, assuming empty file.');
@@ -93,29 +93,37 @@ router.post('/report', function(req, res){ //Generate timing report.
 	}else
 		constrPath = './' + req.files.constr.path;
 
+	var unlinker = {
+		netlistPath: netlistPath,
+		stdcellPath: stdcellPath,
+		clkPath: clkPath,
+		capPath: capPath,
+		constrPath: constrPath,
+		unlinkAll: function(){
+			console.log('Unlinking all..');
+			fs.unlink(this.stdcellPath); //Deleting uploaded file.
+		    fs.unlink(this.netlistPath);
+			fs.unlink(this.clkPath);
+			fs.unlink(this.capPath);
+			fs.unlink(this.constrPath);
+		}
+	};
+
 
 	fs.readFile(stdcellPath, 'utf8', function(err, stdcellData){
 		if(err){
 				console.log(err);
 				req.flash('error', 'Error while reading the standard cell file.');
 		        res.redirect('/');
-		        fs.unlink(stdcellPath); //Deleting uploaded file.
-		        fs.unlink(netlistPath);
-		        fs.unlink(clkPath);
-		        fs.unlink(capPath);
-		        fs.unlink(constrPath);
-		        return;
+				unlinker.unlinkAll(); //Deleting all uploaded/created files.		   
+				return;
 		    }else{
 		    	LibertyParser.parse(stdcellData, function(err, stdcells){
 		    		if(err){
 		    			console.log(err);
 		    			req.flash('error', err);
 		        		res.redirect('/');
-		        		fs.unlink(stdcellPath); //Deleting uploaded file.
-		        		fs.unlink(netlistPath);
-						fs.unlink(clkPath);
-						fs.unlink(capPath);
-						fs.unlink(constrPath);
+		        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 						return;
 		    		}else{
 		    			fs.readFile(capPath, 'utf8', function(err, capData){
@@ -123,11 +131,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 				    			console.log(err);
 				    			req.flash('error', 'Error while reading the net capacitances file.');
 				        		res.redirect('/');
-				        		fs.unlink(stdcellPath); //Deleting uploaded file.
-						        fs.unlink(netlistPath);
-						        fs.unlink(clkPath);
-						        fs.unlink(capPath);
-						        fs.unlink(constrPath);
+				        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 						        return;
 				    		}else{
 				    			CapParser.parse(capData, function(err, caps){
@@ -135,11 +139,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 						    			console.log(err);
 						    			req.flash('error', err);
 						        		res.redirect('/');
-						        		fs.unlink(stdcellPath); //Deleting uploaded file.
-								        fs.unlink(netlistPath);
-								        fs.unlink(clkPath);
-								        fs.unlink(capPath);
-								        fs.unlink(constrPath);
+						        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       							return;
 						        	}else{
 						        		fs.readFile(clkPath, 'utf8', function(err, clkData){
@@ -147,11 +147,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								    			console.log(err);
 								    			req.flash('error', 'Error while reading the clock skews file.');
 								        		res.redirect('/');
-								        		fs.unlink(stdcellPath); //Deleting uploaded file.
-										        fs.unlink(netlistPath);
-										        fs.unlink(clkPath);
-										        fs.unlink(capPath);
-										        fs.unlink(constrPath);
+								        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       									return;
 								        	}else{
 								        		ClockParser.parse(clkData, function(err, skews){
@@ -159,11 +155,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								        				console.log(err);
 										    			req.flash('error', err);
 										        		res.redirect('/');
-										        		fs.unlink(stdcellPath); //Deleting uploaded file.
-												        fs.unlink(netlistPath);
-												        fs.unlink(clkPath);
-												        fs.unlink(capPath);
-												        fs.unlink(constrPath);
+										        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       											return;
 								        			}else{
 								        				fs.readFile(constrPath, 'utf8', function(err, constrData){
@@ -171,11 +163,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								        						console.log(err);
 												        		req.flash('error', 'Error while reading the constraints file.');
 												        		res.redirect('/');
-												        		fs.unlink(stdcellPath); //Deleting uploaded file.
-														        fs.unlink(netlistPath);
-														        fs.unlink(clkPath);
-														        fs.unlink(capPath);
-														        fs.unlink(constrPath);
+												        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       													return;
 								        					}else{
 								        						ConstraintsParser.parse(constrData, function(err, constr){
@@ -183,11 +171,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 								        								console.log(err);
 																        req.flash('error', err);
 																        res.redirect('/');
-																        fs.unlink(stdcellPath); //Deleting uploaded file.
-																		fs.unlink(netlistPath);
-																		fs.unlink(clkPath);
-																		fs.unlink(capPath);
-																		fs.unlink(constrPath);
+																        unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       															return;
 								        							}else{
 								        								fs.readFile(netlistPath, 'utf8', function(err, netlistData){
@@ -195,11 +179,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 												        						console.log(err);
 																        		req.flash('error', 'Error while reading the netlist file.');
 																        		res.redirect('/');
-																        		fs.unlink(stdcellPath); //Deleting uploaded file.
-																		        fs.unlink(netlistPath);
-																		        fs.unlink(clkPath);
-																		        fs.unlink(capPath);
-																		        fs.unlink(constrPath);
+																        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       																	return;
 												        					}else{
 												        						VerilogParser.parse(netlistData, stdcells, caps, skews, function(err, warnings, cells, wires){
@@ -207,11 +187,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        						console.log(err);
 																		    			req.flash('error', err);
 																		        		res.redirect('/');
-																		        		fs.unlink(stdcellPath); //Deleting uploaded file.
-																				        fs.unlink(netlistPath);
-																				        fs.unlink(clkPath);
-																				        fs.unlink(capPath);
-																				        fs.unlink(constrPath);
+																		        		unlinker.unlinkAll(); //Deleting all uploaded/created files.
 		       																			return;								
 														        					}else{
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
@@ -387,11 +363,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        											  stdcells: JSON.stringify(stdCellsContent),
 														        											  cell_reports: JSON.stringify(cellReports),
 														        											  general_report: JSON.stringify(generalReports)});
-														        						fs.unlink(stdcellPath); //Deleting uploaded file.
-																				        fs.unlink(netlistPath);
-																				        fs.unlink(clkPath);
-																				        fs.unlink(capPath);
-																				        fs.unlink(constrPath);
+														        						unlinker.unlinkAll(); //Deleting all uploaded/created files.
 														        					}
 												        						})/****END PARSE NETLIST FILE****/
 												        					}

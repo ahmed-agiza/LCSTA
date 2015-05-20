@@ -3,10 +3,9 @@
 <head>
 	<title>LCSTA | <%= title %></title>
 	<link rel="icon" type="image/ico" href="images/favicon.ico">
-	<script src="/javascripts/aui-min.js"></script>
-	<link rel="stylesheet" href="/javascripts/bootstrap.min.css">
-	<script src="/javascripts/jquery-2.1.3.min.js"></script>
-	<link rel="stylesheet" href="/stylesheets/style.css" />
+    <link rel="stylesheet" href="/application.min.css" />
+    <script src="/javascripts/jquery-2.1.3.min.js"></script>
+    <script src="/javascripts/bootstrap.min.js"></script>
 	<script type="text/javascript">
 		
 	</script>
@@ -30,7 +29,7 @@
 				<form id="form-netlist" action="/report" method="post" enctype="multipart/form-data">
 					<legend><h3><b>Inputs Files Upload</b></h3></legend>
 					<div class="form-group">
-						<label class="control-label" for="netlist-btn">Netlist File:
+						<label class="control-label" for="netlist-btn">Netlist File:*
 							<div class="controls">
 								<input name="netlist" id="netlist-btn" class="form-control field-required input-file" type="file">
 							</div>
@@ -38,13 +37,23 @@
 					</div>
 					<br/>
 					<div class="form-group">
-						<label class="control-label" for="stdcell-btn">Standard Cell File:
+						<label class="control-label" for="stdcell-btn">Standard Cell File:*
 							<div class="controls">
 								<input name="stdcell" id="stdcell-btn" class="form-control field-required input-file" type="file">
 							</div>
 						</label>
 					</div>
 					<br/>
+					
+					<div class="form-group">
+						<label class="control-label" for="constr-btn">Timing Constraints File:*
+							<div class="controls">
+								<input name="constr" id="constr-btn" class="form-control field-required input-file" type="file">
+							</div>
+						</label>
+					</div>
+					<br/>
+
 					<div class="form-group">
 						<label class="control-label" for="clk-btn">Clock Skews File:
 							<div class="controls">
@@ -61,14 +70,7 @@
 						</label>
 					</div>
 					<br/>
-					<div class="form-group">
-						<label class="control-label" for="constr-btn">Timing Constraints File:
-							<div class="controls">
-								<input name="constr" id="constr-btn" class="form-control field-required input-file" type="file">
-							</div>
-						</label>
-					</div>
-					<br/>
+					
 
 					<div class="btn-group btn-group-justified" role="group" style = "width: 100%;">
 						<input class="btn btn-info" type="submit" value="Submit!" style = "width: 100%;">
