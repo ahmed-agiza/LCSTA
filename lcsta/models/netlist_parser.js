@@ -254,7 +254,7 @@ module.exports.parse = function(data, stdcells, caps, skews, callback){
 	
 	/****Connecting Extracted Gates****/
 	for(var key in wires){
-		if((key in wires) && wires[key].type !== 'dummy_wire')
+		if(typeof wires[key] !== 'undefined' && wires[key].type !== 'dummy_wire')
 			for(var i = 0; i < wires[key].outputs.length; i++){
 				if(Object.keys(wires[key].input).length === 0 || typeof(wires[key].outputs[i]) === 'undefined' || Object.keys(wires[key].outputs[i]).length === 0){
 					console.log('Flying wire ' + key);
