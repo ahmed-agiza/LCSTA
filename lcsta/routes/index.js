@@ -98,7 +98,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 		capPath: capPath,
 		constrPath: constrPath,
 		unlinkAll: function(){
-			console.log('Unlinking all..');
 			fs.unlink(this.stdcellPath); //Deleting uploaded file.
 		    fs.unlink(this.netlistPath);
 			fs.unlink(this.clkPath);
@@ -190,47 +189,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        					}else{
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
 														        						StaticTimingAnalyser.analyze();
-														        						var report = StaticTimingAnalyser.generateTimingReport();
-														        						console.log(report.gates);
-														        						var cellReports = [
-															        											{
-															        												name: '_1_', //Dummy Data!
-															        												module: 'AND2X1',
-					 																								AAT: 0.5,
-					 																								RAT: 0.5,
-					 																								slack: 0.5,
-					 																								timing_violation: false},
-															        											{
-															        												name: '_2_',
-															        												module: 'AND2X2',
-					 																								AAT: 0.2,
-					 																								RAT: 0.3,
-					 																								slack: 0.6,
-					 																								timing_violation: false},
-															        											{
-															        												name: '_3_',
-															        												module: 'DFF2X1',
-					 																								AAT: 0.5,
-					 																								RAT: 0.1,
-					 																								slack: 0.2,
-					 																								timing_violation: true},
-															        											{
-															        												name: '_4_',
-															        												module: 'INVX8',
-					 																								AAT: 0.05,
-					 																								RAT: 0.02,
-					 																								slack: 0.03,
-					 																								timing_violation: false}
-				 																							];
-														        						var generalReports = {
-														        												ipsum: 'quis blandit magna',
-														        												dolor: 0.02,
-														        												sit: 0.2,
-														        												amet: 'mattis pulvinar turpis',
-														        												consectetur: 0.06,
-														        												adipiscing: 'elit',
-														        												proin: 120
-														        											  };
+														        						var report = StaticTimingAnalyser.generateTimingReport();														        						
 														        						var cellsContents = [];
 														        						var stdCellsContent = [];
 														        						for(var key in cells){
@@ -359,7 +318,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        											  netlist_cells: JSON.stringify(cellsContents),
 														        											  stdcells: JSON.stringify(stdCellsContent),
 														        											  cell_reports: JSON.stringify(report.gates),
-														        											  general_report: JSON.stringify(generalReports)});
+														        											  general_report: JSON.stringify(report.general)});
 														        						unlinker.unlinkAll(); //Deleting all uploaded/created files.
 														        					}
 												        						})/****END PARSE NETLIST FILE****/

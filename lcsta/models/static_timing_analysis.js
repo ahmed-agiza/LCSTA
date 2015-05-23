@@ -2,6 +2,11 @@
 
 var Cell = require("./cell");
 
+function toTitleCase(str){
+	var title = require('to-title-case');
+	return title(str.replace(/_/gm, ' '));
+};
+
 var STA = function(gates, constraints){
 	this.arrivalTimeCalculation = function(){
 		this._topologicalSorting(true); // Forward topological sorting of the graph
@@ -77,13 +82,27 @@ var STA = function(gates, constraints){
 	this.generateTimingReport = function(){
 		var report = {};
 		var gatesReport = [];
+		var inputsReport = [];
+		var outputsReport = [];
 		for(var i = 1; i < this.gates.length; i++){
+
 			var gateI = this.gates[i];
-			if(gateI.is_dummy || gateI.is_input || gateI.is_output)
+			if(gateI.is_dummy)
 				continue;
 			var gateReport = {};
-			gateReport.name = gateI.instanceName;
-			gateReport.module = gateI.cellName;
+			if(gateI.is_output){
+				gateReport.name = gateI.IO_wire
+				gateReport.name_id = gateI.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___');
+				gateReport.module = 'Output Port';
+			}else if (gateI.is_input){
+				gateReport.name = gateI.IO_wire
+				gateReport.name_id = gateI.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___');
+				gateReport.module = 'Input Port';
+			}else{
+				gateReport.name_id = gateI.instanceName.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___');
+				gateReport.name = gateI.instanceName;
+				gateReport.module = gateI.cellName;
+			}
 			gateReport.input_slew_min = gateI.input_slew.min; 
 			gateReport.input_slew_max = gateI.input_slew.max; 
 			gateReport.output_slew_min = gateI.output_slew.min; 
@@ -108,31 +127,19 @@ var STA = function(gates, constraints){
 				gateReport.hold_max = gateI.hold.max;
 			}else
 				gateReport.is_ff = false;
-			gatesReport.push(gateReport);
+				
+			if(gateI.is_input)
+				inputsReport.push(gateReport);
+			else if (gateI.is_output)
+				outputsReport.push(gateReport);
+			else
+				gatesReport.push(gateReport);
 		}
 
-		report.gates = gatesReport;
+		report.gates = gatesReport.concat(outputsReport).concat(inputsReport);
+		report.general = {};
 
 		return report;
-		/*for(var i=1; i<this.gates.length; i++){
-			console.log(this.gates[i].instanceName);
-			console.log("Input Slew " + this.gates[i].input_slew.max + ", " + this.gates[i].input_slew.min);
-			console.log("Output Slew " + this.gates[i].output_slew.max + ", " + this.gates[i].output_slew.min);
-			console.log("Capacitance Load " + this.gates[i].capacitance_load.max + ", " + this.gates[i].capacitance_load.min);
-			console.log("Gate Delay " + this.gates[i].gate_delay.max + ", " + this.gates[i].gate_delay.min);
-			console.log("Min AAT " + this.gates[i].AAT_min);
-			console.log("Max AAT " + this.gates[i].AAT_max);
-			console.log("RAT " + this.gates[i].RAT);
-			console.log("Setup Slack " + this.gates[i].slack);
-			if(this.gates[i].isFF()){
-				console.log("Hold Slack " + this.gates[i].hold_slack);
-				console.log("Starting AAT " + this.gates[i].AAT_FF_start);
-				console.log("Starting RAT " + this.gates[i].RAT_FF_start);
-				console.log("Starting Setup Slack " + this.gates[i].slack_FF_start);
-				console.log("Setup " + this.gates[i].setup.max + ", " + this.gates[i].setup.min);
-				console.log("Hold " + this.gates[i].hold.max + ", " + this.gates[i].hold.min);
-			}
-		}*/
 	};
 
 	this.optimizeCellSizes = function(){

@@ -187,3 +187,7 @@ a {
 .violation{
   color: #870020 !important;
 }
+
+.collapse-head{
+  background-color: #FCFCFC !important;
+}

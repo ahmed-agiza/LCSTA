@@ -79,42 +79,50 @@
                                                 <%if(cell.setup_slack < 0 || (cell.is_ff && cell.hold_slack < 0)){%>
                                                     <% if(cell.is_ff){%>
                                                         <%if (cell.setup_slack < 0 && cell.hold_slack <0) {%>
-                                                                <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Setup and Hold Viloation)</strong></a>
+                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Setup and Hold Viloation)</strong></a>
                                                         <%}else if(cell.setup_slack < 0) {%>
-                                                                <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Setup Viloation)</strong></a>
+                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Setup Viloation)</strong></a>
                                                         <%}else{%>
-                                                                <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Hold Viloation)</strong></a>
+                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Hold Viloation)</strong></a>
                                                         <%}%>
                                                     <%}else{%>
-                                                                <a href="javascript:void(0);" class="list-group-item violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%> (Setup Viloation)</strong></a>
+                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Setup Viloation)</strong></a>
                                                     <%}%>
-                                                     <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
-                                                        <a class="list-group-item violation"> Minimum Input Slew Rate: <%= cell.input_slew_min%></a>
-                                                        <a class="list-group-item violation"> Maximum Input Slew Rate: <%= cell.input_slew_max%></a>
-                                                        <a class="list-group-item violation"> Minimum Output Slew Rate: <%= cell.output_slew_min%></a>
-                                                        <a class="list-group-item violation"> Maximum Output Slew Rate: <%= cell.output_slew_max%></a>
-                                                        <a class="list-group-item violation"> Minimum Capacitance Load: <%= cell.capacitance_load_min%></a>
-                                                        <a class="list-group-item violation"> Maximum Capacitance Load: <%= cell.capacitance_load_max%></a>
-                                                        <a class="list-group-item violation"> Minimum Cell Delay: <%= cell.delay_min%></a>
-                                                        <a class="list-group-item violation"> Maximum Cell Delay: <%= cell.delay_max%></a>
-                                                        <a class="list-group-item violation"> Minimum Arrival Time: <%= cell.AAT_min%></a>
-                                                        <a class="list-group-item violation"> Maximum Arrival Time: <%= cell.AAT_max%></a>
-                                                        <a class="list-group-item violation"> Required Arrival Time: <%= cell.RAT%></a>
-                                                        <a class="list-group-item violation"> Setup Slack: <%= cell.setup_slack%></a>
+                                                     <div id="collapse-cell-report-<%=cell.name_id%>" class="sublinks gate-report-items collapse">
+                                                        <a class="list-group-item"> Minimum Input Slew Rate: <%= cell.input_slew_min%></a>
+                                                        <a class="list-group-item"> Maximum Input Slew Rate: <%= cell.input_slew_max%></a>
+                                                        <a class="list-group-item"> Minimum Output Slew Rate: <%= cell.output_slew_min%></a>
+                                                        <a class="list-group-item"> Maximum Output Slew Rate: <%= cell.output_slew_max%></a>
+                                                        <a class="list-group-item"> Minimum Capacitance Load: <%= cell.capacitance_load_min%></a>
+                                                        <a class="list-group-item"> Maximum Capacitance Load: <%= cell.capacitance_load_max%></a>
+                                                        <a class="list-group-item"> Minimum Cell Delay: <%= cell.delay_min%></a>
+                                                        <a class="list-group-item"> Maximum Cell Delay: <%= cell.delay_max%></a>
+                                                        <a class="list-group-item"> Minimum Arrival Time: <%= cell.AAT_min%></a>
+                                                        <a class="list-group-item"> Maximum Arrival Time: <%= cell.AAT_max%></a>
+                                                        <a class="list-group-item"> Required Arrival Time: <%= cell.RAT%></a>
+                                                        <%if(cell.setup_slack < 0){%>
+                                                            <a class="list-group-item violation"> Setup Slack: <%= cell.setup_slack%></a>
+                                                        <%}else{%>
+                                                            <a class="list-group-item"> Setup Slack: <%= cell.setup_slack%></a>
+                                                        <%}%>
                                                         <%if (cell.is_ff){%>
-                                                            <a class="list-group-item violation"> Hold Slack: <%= cell.hold_slack%></a>
-                                                            <a class="list-group-item violation"> Arrival Time Start: <%= cell.AAT_start%></a>
-                                                            <a class="list-group-item violation"> Required Time Start: <%= cell.RAT_start%></a>
-                                                            <a class="list-group-item violation"> Flip-flop Slack as start node: <%= cell.slack_FF_start%></a>
-                                                            <a class="list-group-item violation"> Minimum Setup Time: <%= cell.setup_min%></a>
-                                                            <a class="list-group-item violation"> Maximum Setup Time: <%= cell.setup_max%></a>
-                                                            <a class="list-group-item violation"> Minimum Hold Time: <%= cell.hold_min%></a>
-                                                            <a class="list-group-item violation"> Maximum Hold Time: <%= cell.hold_max%></a>
+                                                            <%if(cell.hold_slack < 0){%>
+                                                                <a class="list-group-item violation"> Hold Slack: <%= cell.hold_slack%></a>
+                                                            <%}else{%>
+                                                                <a class="list-group-item"> Hold Slack: <%= cell.hold_slack%></a>
+                                                            <%}%>
+                                                            <a class="list-group-item"> Arrival Time Start: <%= cell.AAT_start%></a>
+                                                            <a class="list-group-item"> Required Time Start: <%= cell.RAT_start%></a>
+                                                            <a class="list-group-item"> Flip-flop Slack as start node: <%= cell.slack_FF_start%></a>
+                                                            <a class="list-group-item"> Minimum Setup Time: <%= cell.setup_min%></a>
+                                                            <a class="list-group-item"> Maximum Setup Time: <%= cell.setup_max%></a>
+                                                            <a class="list-group-item"> Minimum Hold Time: <%= cell.hold_min%></a>
+                                                            <a class="list-group-item"> Maximum Hold Time: <%= cell.hold_max%></a>
                                                         <%}%>
                                                     </div>
                                                 <%}else{%>
-                                                    <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name%>"><strong><%=cell.name%> : <%=cell.module%></strong></a>
-                                                    <div id="collapse-cell-report-<%=cell.name%>" class="sublinks gate-report-items collapse">
+                                                    <a href="javascript:void(0);" class="list-group-item collapse-head" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%></strong></a>
+                                                    <div id="collapse-cell-report-<%=cell.name_id%>" class="sublinks gate-report-items collapse">
                                                         <a class="list-group-item"> Minimum Input Slew Rate: <%= cell.input_slew_min%></a>
                                                         <a class="list-group-item"> Maximum Input Slew Rate: <%= cell.input_slew_max%></a>
                                                         <a class="list-group-item"> Minimum Output Slew Rate: <%= cell.output_slew_min%></a>
@@ -147,8 +155,12 @@
                                     <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-timing-report"><strong>Timing Analysis</strong></a>
                                     <div id="collapse-timing-report" class="sublinks report-items collapse">
                                         <%general_report = JSON.parse(general_report)%>
-                                        <%for(var key in general_report){%>
-                                        <a class="list-group-item"><%=key%>: <%= general_report[key]%></a>
+                                        <%if(Object.keys(general_report).length == 0){%>
+                                            <p><a class="list-group-item">There is currently no data to present in this section.</a></p>
+                                        <%}else{%>
+                                            <%for(var key in general_report){%>
+                                                <a class="list-group-item"><%=key%>: <%= general_report[key]%></a>
+                                            <%}%>
                                         <%}%>
                                     </div>
                                 </div>
