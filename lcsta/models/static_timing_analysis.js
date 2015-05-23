@@ -63,7 +63,58 @@ var STA = function(gates, constraints){
 			}
 		}
 
-		for(var i=1; i<this.gates.length; i++){
+	};
+
+	this.analyze = function(){
+		this.arrivalTimeCalculation(); // AAT evaluation
+		this.requiredTimeCalculation(); // RAT evaluation
+		this.calculateSetupSlack(); // Setup slack evaluation
+		this.calculateHoldSlack(); // Hold slack evaluation
+
+
+	}
+
+	this.generateTimingReport = function(){
+		var report = {};
+		var gatesReport = [];
+		for(var i = 1; i < this.gates.length; i++){
+			var gateI = this.gates[i];
+			if(gateI.is_dummy || gateI.is_input || gateI.is_output)
+				continue;
+			var gateReport = {};
+			gateReport.name = gateI.instanceName;
+			gateReport.module = gateI.cellName;
+			gateReport.input_slew_min = gateI.input_slew.min; 
+			gateReport.input_slew_max = gateI.input_slew.max; 
+			gateReport.output_slew_min = gateI.output_slew.min; 
+			gateReport.output_slew_max = gateI.output_slew.max; 
+			gateReport.capacitance_load_min = gateI.capacitance_load.min;
+			gateReport.capacitance_load_max = gateI.capacitance_load.max;
+			gateReport.delay_min = gateI.gate_delay.min;
+			gateReport.delay_max = gateI.gate_delay.max;
+			gateReport.AAT_min = gateI.AAT_min;
+			gateReport.AAT_max = gateI.AAT_max;
+			gateReport.RAT = gateI.RAT;
+			gateReport.setup_slack = gateI.slack;
+			if(gateI.isFF()){
+				gateReport.is_ff = true;
+				gateReport.hold_slack = gateI.hold_slack;
+				gateReport.AAT_start = gateI.AAT_FF_start;
+				gateReport.RAT_start = gateI.RAT_FF_start;
+				gateReport.slack_FF_start = gateI.slack_FF_start;
+				gateReport.setup_min = gateI.setup.min;
+				gateReport.setup_max = gateI.setup.max;
+				gateReport.hold_min = gateI.hold.min;
+				gateReport.hold_max = gateI.hold.max;
+			}else
+				gateReport.is_ff = false;
+			gatesReport.push(gateReport);
+		}
+
+		report.gates = gatesReport;
+
+		return report;
+		/*for(var i=1; i<this.gates.length; i++){
 			console.log(this.gates[i].instanceName);
 			console.log("Input Slew " + this.gates[i].input_slew.max + ", " + this.gates[i].input_slew.min);
 			console.log("Output Slew " + this.gates[i].output_slew.max + ", " + this.gates[i].output_slew.min);
@@ -81,11 +132,7 @@ var STA = function(gates, constraints){
 				console.log("Setup " + this.gates[i].setup.max + ", " + this.gates[i].setup.min);
 				console.log("Hold " + this.gates[i].hold.max + ", " + this.gates[i].hold.min);
 			}
-		}
-	};
-
-	this.generateTimingReport = function(){
-
+		}*/
 	};
 
 	this.optimizeCellSizes = function(){

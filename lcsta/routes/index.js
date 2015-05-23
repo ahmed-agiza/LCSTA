@@ -189,10 +189,9 @@ router.post('/report', function(req, res){ //Generate timing report.
 		       																			return;								
 														        					}else{
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
-														        						StaticTimingAnalyser.arrivalTimeCalculation(); // AAT evaluation
-														        						StaticTimingAnalyser.requiredTimeCalculation(); // RAT evaluation
-														        						StaticTimingAnalyser.calculateSetupSlack(); // Setup slack evaluation
-														        						StaticTimingAnalyser.calculateHoldSlack(); // Hold slack evaluation
+														        						StaticTimingAnalyser.analyze();
+														        						var report = StaticTimingAnalyser.generateTimingReport();
+														        						console.log(report.gates);
 														        						var cellReports = [
 															        											{
 															        												name: '_1_', //Dummy Data!
@@ -359,7 +358,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        											  verilog_code: netlistData,
 														        											  netlist_cells: JSON.stringify(cellsContents),
 														        											  stdcells: JSON.stringify(stdCellsContent),
-														        											  cell_reports: JSON.stringify(cellReports),
+														        											  cell_reports: JSON.stringify(report.gates),
 														        											  general_report: JSON.stringify(generalReports)});
 														        						unlinker.unlinkAll(); //Deleting all uploaded/created files.
 														        					}
