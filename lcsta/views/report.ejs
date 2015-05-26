@@ -85,7 +85,7 @@
                                                 <%paths.forEach(function(path, ind){%>
                                                         <%arrival = path[path.length - 1].gate.AAT%>
                                                         <%delay = path[path.length - 1].gate.delay%>
-                                                        <%slack = arrival - delay%>
+                                                        <%slack = delay - arrival%>
                                                         <%violating = slack < 0 && (path[0].gate.AAT - path[0].gate.delay) < 0%>
                                                         <%if (violating){%>
                                                             <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
