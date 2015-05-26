@@ -25,6 +25,13 @@
             function collapseGates(){
                 $('.gate-report-items').collapse('hide');
             };
+
+            function expandPaths(){
+                $('.path-report-items').collapse('show');
+            };
+            function collapsePaths(){
+                $('.path-report-items').collapse('hide');
+            };
         </script>
         <style type="text/css">
             #editor { 
@@ -66,7 +73,76 @@
                         <div class="tab-pane" id="report">
                     <%}%>
                             <div id="report-menu">
-                                <div class="panel list-group">
+                            <div class="panel list-group">
+                                    <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-paths-report"><strong>Timing Paths</strong></a>
+                                    <div id="collapse-paths-report" class="sublinks report-items collapse">
+                                        
+                                        <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="expandPaths();">Expand All</button> &nbsp; <button type="button" class="btn btn-primary collapse-btn" aria-expanded="false" onclick="collapsePaths();">Collapse All</button>
+                                        
+                                        <%paths = JSON.parse(paths)%>
+                                        <div id="path-report-menu">
+                                            <div class="panel list-group">
+                                                <%paths.forEach(function(path, ind){%>
+                                                        <%arrival = path[path.length - 1].gate.AAT%>
+                                                        <%delay = path[path.length - 1].gate.delay%>
+                                                        <%slack = arrival - delay%>
+                                                        <%violating = slack < 0 && (path[0].gate.AAT - path[0].gate.delay) < 0%>
+                                                        <%if (violating){%>
+                                                            <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
+                                                        <%}else{%>
+                                                            <a href="javascript:void(0);" class="list-group-item collapse-head" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
+                                                        <%}%>
+                                                        <div id="collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>" class="sublinks path-report-items collapse">
+                                                            <table class = "table table-hover">
+                                                                  <thead>
+                                                                        <th>Module</th>
+                                                                        <th>Type</th>
+                                                                        <th>Port</th>
+                                                                        <th>Arrival Time</th>
+                                                                        <th>Delay</th>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <%path.forEach(function(node, nodeInd){%>
+                                                                            
+                                                                                <tr>
+                                                                                    <td><%=node.gate.name%></td>
+                                                                                    <td><%=node.gate.module%></td>
+                                                                                    <td><%=node.port%></td>
+                                                                                    <td><%=node.gate.AAT%></td>
+                                                                                    <td><%=node.gate.delay%></td>
+                                                                                </tr>
+                                                                        
+                                                                        <%})%>
+                                                                        <tr class = "active">
+                                                                            <th>Data Arrival Time</th>
+                                                                            <td colspan="4"><%=arrival%></td>
+                                                                         </tr>
+                                                                         <tr class = "active">
+                                                                            <th>Data Required Time</th>
+                                                                            <td colspan="4"><%=delay%></td>
+                                                                        </tr>
+                                                                        <%if (violating){%>
+                                                                            <tr class = "danger">
+                                                                                <th>Slack</th>
+                                                                                <td colspan="4"><%=slack%></td>
+                                                                            </tr>
+                                                                        <%}else{%>
+                                                                            <tr class = "success">
+                                                                                <th>Slack</th>
+                                                                                <td colspan="4"><%=slack%></td>
+                                                                            </tr>
+                                                                        <%}%>
+                                                                       
+                                                                    </tbody>
+                                                            </table>
+                                                    </div>
+                                                <%})%>
+                                               
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                       
                                     <a href="javascript:void(0);" class="list-group-item" data-toggle="collapse" data-target="#collapse-gates-report"><strong>Gates Report</strong></a>
                                     <div id="collapse-gates-report" class="sublinks report-items collapse">
                                         
@@ -86,7 +162,7 @@
                                                                 <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Hold Viloation)</strong></a>
                                                         <%}%>
                                                     <%}else{%>
-                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Setup Viloation)</strong></a>
+                                                                <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-cell-report-<%=cell.name_id%>"><strong><%=cell.name%> : <%=cell.module%> (Negative Slack)</strong></a>
                                                     <%}%>
                                                      <div id="collapse-cell-report-<%=cell.name_id%>" class="sublinks gate-report-items collapse">
                                                         <a class="list-group-item"> Minimum Input Slew Rate: <%= cell.input_slew_min%></a>
@@ -168,7 +244,7 @@
                     </div>
 
                     <script type="text/javascript">
-                        $('#collapse-gates-report').collapse('show');
+                        $('#collapse-paths-report').collapse('show');
                     </script>
 
 

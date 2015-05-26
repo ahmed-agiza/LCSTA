@@ -1,5 +1,5 @@
 {
-  "clock": 3,
+  "clock": 7,
   "input_slew": {
     "___input_clk": {
       "rise_transition": 0.15,
