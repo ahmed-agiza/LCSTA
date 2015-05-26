@@ -37,7 +37,6 @@ router.get('/report', function(req, res){ //Timing report view.
 router.post('/report', function(req, res){ //Generate timing report.
 
 	var stringify_paths = function(pathsArray){
-		console.log('stringify');
 								var extractedArray = [];
 								for(var i = 0; i < pathsArray.length; i++){
 									var pathArray = [];
