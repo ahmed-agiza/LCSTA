@@ -75,7 +75,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 											        						delay: pathsArray[i][j].gate.AAT_max,
 											        						module: pathsArray[i][j].gate.cellName
 											        				},
-											        			port: 'Out'
+											        			port: pathsArray[i][j].port.name
 										        			});
 									}
 									extractedArray.push(pathArray);
@@ -361,7 +361,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        						var StaticTimingAnalyser = new STA(cells, constr); // STA construction
 														        						StaticTimingAnalyser.analyze();
 														        						var report = StaticTimingAnalyser.generateTimingReport();														        						
-														        						var cells_contents = stringify_cells(cells);
+														        						var cells_content = stringify_cells(cells);
 														        						var stdcells_content = stringify_std(stdcells.cells);
 														        						
 
@@ -375,7 +375,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 														        											  warnings: JSON.stringify(warnings),
 														        											  files_warnings: JSON.stringify(fileWarnings),
 														        											  verilog_code: netlistData,
-														        											  netlist_cells: cells_contents,
+														        											  netlist_cells: cells_content,
 														        											  stdcells: stdcells_content,
 														        											  cell_reports: JSON.stringify(report.gates),
 														        											  paths: stringify_paths(paths_report),
