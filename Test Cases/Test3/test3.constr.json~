@@ -31,7 +31,7 @@
     }
   },
   "output_delays": {
-    "___output_b": {
+    "___output_b[0]": {
       "cell_rise": 0.4,
       "cell_fall": 0.3
     }

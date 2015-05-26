@@ -75,9 +75,50 @@ var STA = function(gates, constraints){
 		this.requiredTimeCalculation(); // RAT evaluation
 		this.calculateSetupSlack(); // Setup slack evaluation
 		this.calculateHoldSlack(); // Hold slack evaluation
-
-
 	}
+
+	this.generateTimingPathReport = function(){ // Generate all possible timing paths
+		var gates_report = new Array(this.report.length);
+		for(var i=1; i<this.timing_graph.length; i++){
+			if((this.gates[i].is_input && (this.gates[i] != this.clock_node)) || this.gates[i].isFF())
+				this.reportDFS(i, false, true);
+		}
+
+		for(var i=0; i<this.report.length; i++){
+			gates_report[i] = new Array();
+			for(var j=0; j<this.report[i].length; j++){
+				gates_report[i].push({
+					gate: this.gates[this.report[i][j].gate],
+					port: this.report[i][j].port
+				});
+			}
+		}
+
+		return gates_report;
+	};
+
+	this.reportDFS = function(current_index, port, start){ // Used by generateTimingPathReport
+		var gate = this.gates[current_index];
+		var children = this.timing_graph[current_index].children;
+
+		this.path.push({
+			gate: current_index,
+			port: port
+		});
+
+		if(gate.is_output || (gate.isFF() && !start)){
+			var path = this._clone(this.path);
+			this.report.push(path);
+		}
+
+		else{
+			for(var i=0; i<children.length; i++){
+				this.reportDFS(children[i].gate, children[i].port, false);
+			}
+		}
+
+		this.path.pop();
+	};
 
 	this.generateTimingReport = function(){
 		var report = {};
@@ -507,11 +548,16 @@ var STA = function(gates, constraints){
 		if(node.is_output){ // If this is an output pin
 			var output_capacitance;
 			if(node.instanceName in this.output_capacitance_load)
+			{
 				output_capacitance = this.output_capacitance_load[node.instanceName];
-			else
+				node.capacitance_load.max = Math.max(output_capacitance.rise_capacitance, output_capacitance.fall_capacitance);
+				node.capacitance_load.min = Math.min(output_capacitance.rise_capacitance, output_capacitance.fall_capacitance);
+			}
+			else{
 				output_capacitance = 0;
-			node.capacitance_load.max = Math.max(output_capacitance.rise_capacitance, output_capacitance.fall_capacitance);
-			node.capacitance_load.min = Math.min(output_capacitance.rise_capacitance, output_capacitance.fall_capacitance);
+				node.capacitance_load.max = 0;
+				node.capacitance_load.min = 0;
+			}
 		}
 		else{
 			var child;
@@ -580,6 +626,10 @@ var STA = function(gates, constraints){
 	this.calculated_capacitance = new Array(this.gates.length);
 	this.forward_ordering = new Array(); // Topological order of the nodes for foward traversal
 	this.backward_ordering = new Array(); // Topological order of the nodes for backward traversal
+
+	// For reporting
+	this.report = new Array();
+	this.path = new Array();
 
 	// Constraints data
 	if("input_delays" in constraints)
