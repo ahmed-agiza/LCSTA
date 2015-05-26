@@ -1,4 +1,4 @@
-module test6(a, b, clk);
+module test5(a, b, clk);
   input [2:0] a;
   input clk;
   output b;
