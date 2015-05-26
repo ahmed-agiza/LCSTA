@@ -36,20 +36,26 @@ router.get('/report', function(req, res){ //Timing report view.
 
 router.post('/report', function(req, res){ //Generate timing report.
 
-
 	var stringify_paths = function(pathsArray){
+		console.log('stringify');
 								var extractedArray = [];
 								for(var i = 0; i < pathsArray.length; i++){
 									var pathArray = [];
 									for(var j = 0; j < pathsArray[i].length; j++){
+										if(j == 0){
+											console.log('j = 0');
+											console.log(pathsArray[i][j].gate.is_ff);
+											if(pathsArray[i][j].gate.is_ff)
+												console.log(pathsArray[i][j].gate.AAT_FF_start + ' ' + pathsArray[i][j].gate.AAT_max);
+										}
 										if(pathsArray[i][j].gate.is_input){
 
 											pathArray.push({
 															gate: {
 																		name: pathsArray[i][j].gate.IO_wire,
 																		name_id: pathsArray[i][j].gate.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
-																		AAT: pathsArray[i][j].gate.gate_delay.max,
-										        						delay: pathsArray[i][j].gate.AAT_max,
+																		delay: pathsArray[i][j].gate.gate_delay.max,
+										        						AAT: pathsArray[i][j].gate.AAT_max,
 										        						module: 'Input Port'
 										        				},
 										        			port: 'In'
@@ -60,8 +66,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 															gate: {
 																		name: pathsArray[i][j].gate.IO_wire,
 																		name_id: pathsArray[i][j].gate.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
-																		AAT: pathsArray[i][j].gate.gate_delay.max,
-										        						delay: pathsArray[i][j].gate.AAT_max,
+																		delay: pathsArray[i][j].gate.gate_delay.max,
+										        						AAT: pathsArray[i][j].gate.AAT_max,
 										        						module: 'Output Port'
 										        				},
 										        			port: pathsArray[i][j].port.name
@@ -71,11 +77,11 @@ router.post('/report', function(req, res){ //Generate timing report.
 																gate: {
 																			name: pathsArray[i][j].gate.instanceName,
 																			name_id: pathsArray[i][j].gate.instanceName.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
-																			AAT: pathsArray[i][j].gate.gate_delay.max,
-											        						delay: pathsArray[i][j].gate.AAT_max,
+																			delay: pathsArray[i][j].gate.gate_delay.max,
+											        						AAT: (j == 0 && pathsArray[i][j].gate.is_ff)? pathsArray[i][j].gate.AAT_FF_start : pathsArray[i][j].gate.AAT_max,
 											        						module: pathsArray[i][j].gate.cellName
 											        				},
-											        			port: pathsArray[i][j].port.name
+											        			port: pathsArray[i][j].port.name? pathsArray[i][j].port.name : 'In'
 										        			});
 									}
 									extractedArray.push(pathArray);
