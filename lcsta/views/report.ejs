@@ -84,9 +84,9 @@
                                             <div class="panel list-group">
                                                 <%paths.forEach(function(path, ind){%>
                                                         <%arrival = path[path.length - 1].gate.AAT%>
-                                                        <%delay = path[path.length - 1].gate.delay%>
-                                                        <%slack = delay - arrival%>
-                                                        <%violating = slack < 0 && (path[0].gate.AAT - path[0].gate.delay) < 0%>
+                                                        <%RAT = path[path.length - 1].gate.RAT%>
+                                                        <%slack = RAT - arrival%>
+                                                        <%violating = slack < 0 && (path[0].gate.RAT - path[0].gate.AAT) < 0%>
                                                         <%if (violating){%>
                                                             <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
                                                         <%}else{%>
@@ -98,8 +98,8 @@
                                                                         <th>Module</th>
                                                                         <th>Type</th>
                                                                         <th>Port</th>
-                                                                        <th>Arrival Time</th>
                                                                         <th>Delay</th>
+                                                                        <th>Arrival Time</th>
                                                                     </thead>
                                                                     <tbody>
                                                                         <%path.forEach(function(node, nodeInd){%>
@@ -108,8 +108,8 @@
                                                                                     <td><%=node.gate.name%></td>
                                                                                     <td><%=node.gate.module%></td>
                                                                                     <td><%=node.port%></td>
-                                                                                    <td><%=node.gate.AAT%></td>
                                                                                     <td><%=node.gate.delay%></td>
+                                                                                    <td><%=node.gate.AAT%></td>
                                                                                 </tr>
                                                                         
                                                                         <%})%>
@@ -119,7 +119,7 @@
                                                                          </tr>
                                                                          <tr class = "active">
                                                                             <th>Data Required Time</th>
-                                                                            <td colspan="4"><%=delay%></td>
+                                                                            <td colspan="4"><%=RAT%></td>
                                                                         </tr>
                                                                         <%if (violating){%>
                                                                             <tr class = "danger">

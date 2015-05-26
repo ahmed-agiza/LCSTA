@@ -50,7 +50,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																		name_id: pathsArray[i][j].gate.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
 																		delay: pathsArray[i][j].gate.gate_delay.max,
 										        						AAT: pathsArray[i][j].gate.AAT_max,
-										        						module: 'Input Port'
+										        						module: 'Input Port',
+										        						RAT: pathsArray[i][j].gate.RAT
 										        				},
 										        			port: 'In'
 									        			});
@@ -62,7 +63,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																		name_id: pathsArray[i][j].gate.IO_wire.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
 																		delay: pathsArray[i][j].gate.gate_delay.max,
 										        						AAT: pathsArray[i][j].gate.AAT_max,
-										        						module: 'Output Port'
+										        						module: 'Output Port',
+										        						RAT: pathsArray[i][j].gate.RAT
 										        				},
 										        			port: pathsArray[i][j].port.name
 									        			});
@@ -73,7 +75,8 @@ router.post('/report', function(req, res){ //Generate timing report.
 																			name_id: pathsArray[i][j].gate.instanceName.replace(/\[/gm, '_ob_').replace(/\]/gm, '_cb_').replace(/\s+/gm,'___'),
 																			delay: pathsArray[i][j].gate.gate_delay.max,
 											        						AAT: (j == 0 && pathsArray[i][j].gate.is_ff)? pathsArray[i][j].gate.AAT_FF_start : pathsArray[i][j].gate.AAT_max,
-											        						module: pathsArray[i][j].gate.cellName
+											        						module: pathsArray[i][j].gate.cellName,
+										        							RAT: (j == 0 && pathsArray[i][j].gate.is_ff)? pathsArray[i][j].gate.RAT_FF_start : pathsArray[i][j].gate.RAT,
 											        				},
 											        			port: pathsArray[i][j].port.name? pathsArray[i][j].port.name : 'In'
 										        			});
