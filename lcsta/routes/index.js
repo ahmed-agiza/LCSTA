@@ -42,12 +42,6 @@ router.post('/report', function(req, res){ //Generate timing report.
 								for(var i = 0; i < pathsArray.length; i++){
 									var pathArray = [];
 									for(var j = 0; j < pathsArray[i].length; j++){
-										if(j == 0){
-											console.log('j = 0');
-											console.log(pathsArray[i][j].gate.is_ff);
-											if(pathsArray[i][j].gate.is_ff)
-												console.log(pathsArray[i][j].gate.AAT_FF_start + ' ' + pathsArray[i][j].gate.AAT_max);
-										}
 										if(pathsArray[i][j].gate.is_input){
 
 											pathArray.push({
