@@ -199,18 +199,7 @@ router.post('/report', function(req, res){ //Generate timing report.
 									}
 									extractedArray.push(pathArray);
 								}
-								/*for(var i = 0; i < extractedArray.length; i++){
-	        							var path_string = JSON.stringify(extractedArray[i]);
-	        							var removed = false;
-	        							for(var j = i + 1; j < extractedArray.length; j++)
-	        								if(path_string == JSON.stringify(extractedArray[j])){
-	        									extractedArray.splice(j--, 1);
-	        									if(!removed){
-	        										removed = true;
-	        										i--;
-	        									}
-	        								}
-        						}*/
+
 								return JSON.stringify(extractedArray);
 							};
 	var stringify_cells = function(cells){

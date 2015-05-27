@@ -84,14 +84,6 @@ var STA = function(gates, constraints){
 				this.reportDFS(i, false, true);
 		}
 
-		for(var i=0; i<this.timing_graph.length; i++){
-			console.log(this.gates[i].instanceName);
-			console.log("--");
-			for(var j=0; j<this.timing_graph[i].children.length; j++){
-				console.log(this.gates[this.timing_graph[i].children[j].gate].instanceName + " " + this.timing_graph[i].children[j].port.name);
-			}
-		}
-
 		for(var i=0; i<this.report.length; i++){
 			gates_report[i] = new Array();
 			for(var j=0; j<this.report[i].length; j++){
@@ -250,12 +242,10 @@ var STA = function(gates, constraints){
 			if(child.inputs[key][0] == parent){
 				if(this.port_counter[child.instanceName] != undefined){
 					if(this.port_counter[child.instanceName][parent.instanceName] != undefined){
-						console.log(this.port_counter[child.instanceName][parent.instanceName]);
 						if(counter == this.port_counter[child.instanceName][parent.instanceName]){
 							this.port_counter[child.instanceName][parent.instanceName]++;
 							return child.inputPorts[key];
-						}
-						else{
+						}else{
 							counter++;
 							continue;
 						}

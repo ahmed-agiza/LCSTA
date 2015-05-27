@@ -32,6 +32,7 @@
             function collapsePaths(){
                 $('.path-report-items').collapse('hide');
             };
+
         </script>
         <style type="text/css">
             #editor { 
@@ -88,9 +89,9 @@
                                                         <%slack = RAT - arrival%>
                                                         <%violating = slack < 0 && (path[0].gate.RAT - path[0].gate.AAT) < 0%>
                                                         <%if (violating){%>
-                                                            <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
+                                                            <a href="javascript:void(0);" class="list-group-item collapse-head violation" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>    <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
                                                         <%}else{%>
-                                                            <a href="javascript:void(0);" class="list-group-item collapse-head" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>  -->  <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
+                                                            <a href="javascript:void(0);" class="list-group-item collapse-head" data-toggle="collapse" data-target="#collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>"><strong><%=path[0].gate.module%> : <%=path[0].gate.name%>    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>    <%=path[path.length - 1].gate.module%> : <%=path[path.length - 1].gate.name%></strong></a>
                                                         <%}%>
                                                         <div id="collapse-path-report-<%=path[0].gate.name_id%>-<%=ind%>" class="sublinks path-report-items collapse">
                                                             <table class = "table table-hover">
