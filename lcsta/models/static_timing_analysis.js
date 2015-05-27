@@ -84,6 +84,14 @@ var STA = function(gates, constraints){
 				this.reportDFS(i, false, true);
 		}
 
+		for(var i=0; i<this.timing_graph.length; i++){
+			console.log(this.gates[i].instanceName);
+			console.log("--");
+			for(var j=0; j<this.timing_graph[i].children.length; j++){
+				console.log(this.gates[this.timing_graph[i].children[j].gate].instanceName + " " + this.timing_graph[i].children[j].port.name);
+			}
+		}
+
 		for(var i=0; i<this.report.length; i++){
 			gates_report[i] = new Array();
 			for(var j=0; j<this.report[i].length; j++){
@@ -237,9 +245,27 @@ var STA = function(gates, constraints){
 	};
 
 	this._getInputPort = function(parent, child){ // Get the child's input port the parent connects to
-		for(var key in child.inputPorts)
-			if(child.inputs[key][0] == parent)
+		var counter = 0;
+		for(var key in child.inputPorts){
+			if(child.inputs[key][0] == parent){
+				if(this.port_counter[child.instanceName] != undefined){
+					if(this.port_counter[child.instanceName][parent.instanceName] != undefined){
+						console.log(this.port_counter[child.instanceName][parent.instanceName]);
+						if(counter == this.port_counter[child.instanceName][parent.instanceName]){
+							this.port_counter[child.instanceName][parent.instanceName]++;
+							return child.inputPorts[key];
+						}
+						else{
+							counter++;
+							continue;
+						}
+					}
+				}
+				this.port_counter[child.instanceName] = {};
+				this.port_counter[child.instanceName][parent.instanceName] = 1;
 				return child.inputPorts[key];
+			}
+		}
 	};
 
 	this._topologicalSorting = function(forward){ // Topologically sort the nodes for analysis
@@ -623,6 +649,7 @@ var STA = function(gates, constraints){
 	this.constraints = constraints; // Constraints
 	this.timing_graph = new Array(this.gates.length); // Structure to store the timing graph
 	this.visited = new Array(this.gates.length); // Used for building the graph
+	this.port_counter = {};
 	this.calculated_capacitance = new Array(this.gates.length);
 	this.forward_ordering = new Array(); // Topological order of the nodes for foward traversal
 	this.backward_ordering = new Array(); // Topological order of the nodes for backward traversal
